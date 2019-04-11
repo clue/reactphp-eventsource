@@ -1,0 +1,24 @@
+{
+    "name": "clue/reactphp-eventsource",
+    "description": "Event-driven EventSource client, receiving streaming messages from any HTML5 Server-Sent Events (SSE) server, built on top of ReactPHP",
+    "keywords": ["EventSource", "Server-Side Events", "SSE", "event-driven", "ReactPHP", "async"],
+    "homepage": "https://github.com/clue/reactphp-eventsource",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Christian Lück",
+            "email": "christian@lueck.tv"
+        }
+    ],
+    "autoload": {
+        "psr-4": { "Clue\\React\\EventSource\\": "src/" }
+    },
+    "require": {
+        "php": ">=5.4",
+        "clue/buzz-react": "^2.5",
+        "evenement/evenement": "^3.0 || ^2.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.0 || ^6.4 || ^5.7 || ^4.8.35"
+    }
+}
