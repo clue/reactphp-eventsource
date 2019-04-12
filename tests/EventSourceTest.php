@@ -42,7 +42,7 @@ class EventSourceTest extends TestCase
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
-        $es = new EventSource('http://example.com', $loop);
+        $es = new EventSource('http://example.invalid', $loop);
 
         $ref = new ReflectionProperty($es, 'browser');
         $ref->setAccessible(true);
@@ -51,27 +51,9 @@ class EventSourceTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Browser', $browser);
     }
 
-    public function testConstructorWillStartTimerToStartRequest()
+    public function testConstructorWillSendGetRequestThroughGivenBrowser()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->isType('callable'));
-
-        $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->never())->method('get');
-
-        new EventSource('http://example.com', $loop, $browser);
-    }
-
-
-    public function testConstructorWillSendGetRequestThroughGivenBrowserAfterTimer()
-    {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
         $pending = new Promise(function () { });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
@@ -79,19 +61,11 @@ class EventSourceTest extends TestCase
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($pending);
 
         $es = new EventSource('http://example.com', $loop, $browser);
-
-        $this->assertNotNull($timer);
-        $timer();
     }
 
-    public function testConstructorWillSendGetRequestThroughGivenBrowserWithHttpsSchemeAfterTimer()
+    public function testConstructorWillSendGetRequestThroughGivenBrowserWithHttpsScheme()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
         $pending = new Promise(function () { });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
@@ -99,34 +73,11 @@ class EventSourceTest extends TestCase
         $browser->expects($this->once())->method('get')->with('https://example.com')->willReturn($pending);
 
         $es = new EventSource('https://example.com', $loop, $browser);
-
-        $this->assertNotNull($timer);
-        $timer();
     }
 
-    public function testCloseWillCancelPendingConnectionTimerBeforeInitialGetRequestWhenCalledDirectlyAfterConstruction()
-    {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $loop->expects($this->once())->method('addTimer')->willReturn($timer);
-        $loop->expects($this->once())->method('cancelTimer')->with($timer);
-
-        $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->never())->method('get');
-
-        $es = new EventSource('http://example.com', $loop, $browser);
-        $es->close();
-    }
-
-    public function testCloseAfterTimerWillCancelPendingGetRequest()
+    public function testCloseWillCancelPendingGetRequest()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
         $cancelled = null;
         $pending = new Promise(function () { }, function () use (&$cancelled) {
@@ -137,23 +88,14 @@ class EventSourceTest extends TestCase
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($pending);
 
         $es = new EventSource('http://example.com', $loop, $browser);
-
-        $this->assertNotNull($timer);
-        $timer();
-
         $es->close();
 
         $this->assertEquals(1, $cancelled);
     }
 
-    public function testCloseAfterTimerWillNotEmitErrorEventWhenGetRequestCancellationHandlerRejects()
+    public function testCloseWillNotEmitErrorEventWhenGetRequestCancellationHandlerRejects()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
         $pending = new Promise(function () { }, function () {
             throw new RuntimeException();
@@ -163,9 +105,6 @@ class EventSourceTest extends TestCase
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($pending);
 
         $es = new EventSource('http://example.com', $loop, $browser);
-
-        $this->assertNotNull($timer);
-        $timer();
 
         $error = null;
         $es->on('error', function ($e) use (&$error) {
@@ -180,19 +119,9 @@ class EventSourceTest extends TestCase
     public function testConstructorWillStartGetRequestThatWillStartRetryTimerWhenGetRequestRejects()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->exactly(2))->method('addTimer')->withConsecutive(
-            [
-                0,
-                $this->callback(function ($cb) use (&$timer) {
-                    $timer = $cb;
-                    return true;
-                })
-            ],
-            [
-                3.0,
-                $this->isType('callable')
-            ]
+        $loop->expects($this->once())->method('addTimer')->with(
+            3.0,
+            $this->isType('callable')
         );
 
         $deferred = new Deferred();
@@ -202,31 +131,19 @@ class EventSourceTest extends TestCase
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timer);
-        $timer();
-
         $deferred->reject(new RuntimeException());
     }
 
     public function testConstructorWillStartGetRequestThatWillStartRetryTimerThatWillRetryGetRequestWhenInitialGetRequestRejects()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timerStart = $timerRetry = null;
-        $loop->expects($this->exactly(2))->method('addTimer')->withConsecutive(
-            [
-                0,
-                $this->callback(function ($cb) use (&$timerStart) {
-                    $timerStart = $cb;
-                    return true;
-                })
-            ],
-            [
-                3.0,
-                $this->callback(function ($cb) use (&$timerRetry) {
-                    $timerRetry = $cb;
-                    return true;
-                })
-            ]
+        $timerRetry = null;
+        $loop->expects($this->once())->method('addTimer')->with(
+            3.0,
+            $this->callback(function ($cb) use (&$timerRetry) {
+                $timerRetry = $cb;
+                return true;
+            })
         );
 
         $deferred = new Deferred();
@@ -239,9 +156,6 @@ class EventSourceTest extends TestCase
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timerStart);
-        $timerStart();
-
         $deferred->reject(new RuntimeException());
 
         $this->assertNotNull($timerRetry);
@@ -251,19 +165,9 @@ class EventSourceTest extends TestCase
     public function testConstructorWillStartGetRequestThatWillEmitErrorWhenGetRequestRejects()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->exactly(2))->method('addTimer')->withConsecutive(
-            [
-                0,
-                $this->callback(function ($cb) use (&$timer) {
-                    $timer = $cb;
-                    return true;
-                })
-            ],
-            [
-                3.0,
-                $this->isType('callable')
-            ]
+        $loop->expects($this->once())->method('addTimer')->with(
+            3.0,
+            $this->isType('callable')
         );
 
         $deferred = new Deferred();
@@ -272,9 +176,6 @@ class EventSourceTest extends TestCase
         $browser->expects($this->once())->method('get')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
-
-        $this->assertNotNull($timer);
-        $timer();
 
         $caught = null;
         $es->on('error', function ($e) use (&$caught) {
@@ -288,11 +189,6 @@ class EventSourceTest extends TestCase
     public function testConstructorWillStartGetRequestThatWillNotStartRetryTimerWhenGetRequestRejectAndErrorHandlerClosesExplicitly()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
@@ -300,9 +196,6 @@ class EventSourceTest extends TestCase
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
-
-        $this->assertNotNull($timer);
-        $timer();
 
         $es->on('error', function () use ($es) {
             $es->close();
@@ -314,20 +207,11 @@ class EventSourceTest extends TestCase
     {
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timerStart = null;
-        $loop->expects($this->exactly(2))->method('addTimer')->withConsecutive(
-            [
-                0,
-                $this->callback(function ($cb) use (&$timerStart) {
-                    $timerStart = $cb;
-                    return true;
-                })
-            ],
-            [
-                3.0,
-                $this->isType('callable')
-            ]
-        )->willReturnOnConsecutiveCalls(null, $timer);
+        $loop->expects($this->once())->method('addTimer')->with(
+            3.0,
+            $this->isType('callable')
+        )->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
@@ -336,27 +220,44 @@ class EventSourceTest extends TestCase
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timerStart);
-        $timerStart();
-
         $deferred->reject(new RuntimeException());
 
         $es->close();
     }
 
-    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidStatusCodeAfterTimer()
+    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidStatusCode()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
+
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $loop, $browser);
+
+        $readyState = null;
+        $caught = null;
+        $es->on('error', function ($e) use ($es, &$readyState, &$caught) {
+            $readyState = $es->readyState;
+            $caught = $e;
+        });
 
         $response = new Response(400, array('Content-Type' => 'text/event-stream'), '');
+        $deferred->resolve($response);
+
+        $this->assertEquals(EventSource::CLOSED, $readyState);
+        $this->assertInstanceOf('UnexpectedValueException', $caught);
+    }
+
+    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidContentType()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -366,58 +267,22 @@ class EventSourceTest extends TestCase
             $readyState = $es->readyState;
             $caught = $e;
         });
-
-        $this->assertNotNull($timer);
-        $timer();
-
-        $this->assertEquals(EventSource::CLOSED, $readyState);
-        $this->assertInstanceOf('UnexpectedValueException', $caught);
-    }
-
-    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidContentTypeAfterTimer()
-    {
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
         $response = new Response(200, array(), '');
-        $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
-
-        $es = new EventSource('http://example.com', $loop, $browser);
-
-        $readyState = null;
-        $caught = null;
-        $es->on('error', function ($e) use ($es, &$readyState, &$caught) {
-            $readyState = $es->readyState;
-            $caught = $e;
-        });
-
-        $this->assertNotNull($timer);
-        $timer();
+        $deferred->resolve($response);
 
         $this->assertEquals(EventSource::CLOSED, $readyState);
         $this->assertInstanceOf('UnexpectedValueException', $caught);
     }
 
-    public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponseAfterTimer()
+    public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponse()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -426,26 +291,21 @@ class EventSourceTest extends TestCase
             $readyState = $es->readyState;
         });
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $this->assertEquals(EventSource::OPEN, $readyState);
     }
 
-    public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponseWithCaseInsensitiveContentTypeAfterTimer()
+    public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponseWithCaseInsensitiveContentType()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('CONTENT-type' => 'TEXT/Event-Stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -454,8 +314,9 @@ class EventSourceTest extends TestCase
             $readyState = $es->readyState;
         });
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('CONTENT-type' => 'TEXT/Event-Stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $this->assertEquals(EventSource::OPEN, $readyState);
     }
@@ -463,17 +324,11 @@ class EventSourceTest extends TestCase
     public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponseAndSuperfluousParametersAfterTimer()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream;charset=utf-8;foo=bar'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -482,40 +337,31 @@ class EventSourceTest extends TestCase
             $readyState = $es->readyState;
         });
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream;charset=utf-8;foo=bar'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $this->assertEquals(EventSource::OPEN, $readyState);
     }
 
-    public function testCloseResponseStreamWillReturnToStartTimerToReconnectWithoutErrorEvent()
+    public function testCloseResponseStreamWillStartRetryTimerWithoutErrorEvent()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->exactly(2))->method('addTimer')->withConsecutive(
-            [
-                0,
-                $this->callback(function ($cb) use (&$timer) {
-                    $timer = $cb;
-                    return true;
-                })
-            ],
-            [
-                3.0,
-                $this->isType('callable')
-            ]
+        $loop->expects($this->once())->method('addTimer')->with(
+            3.0,
+            $this->isType('callable')
         );
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $error = null;
         $es->on('error', function ($e) use (&$error) {
@@ -531,17 +377,11 @@ class EventSourceTest extends TestCase
     public function testCloseFromOpenEventWillCloseResponseStreamAndCloseEventSource()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -549,8 +389,9 @@ class EventSourceTest extends TestCase
             $es->close();
         });
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $this->assertEquals(EventSource::CLOSED, $es->readyState);
         $this->assertFalse($stream->isReadable());
@@ -559,22 +400,17 @@ class EventSourceTest extends TestCase
     public function testEmitMessageWithParsedDataFromEventStream()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $message = null;
         $es->on('message', function ($m) use (&$message) {
@@ -591,22 +427,17 @@ class EventSourceTest extends TestCase
     public function testEmitMessageWithParsedIdAndDataOverMultipleRowsFromEventStream()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $message = null;
         $es->on('message', function ($m) use (&$message) {
@@ -623,22 +454,17 @@ class EventSourceTest extends TestCase
     public function testEmitMessageWithParsedEventTypeAndDataWithTrailingWhitespaceFromEventStream()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $message = null;
         $es->on('patch', function ($m) use (&$message) {
@@ -654,22 +480,17 @@ class EventSourceTest extends TestCase
     public function testDoesNotEmitMessageWhenParsedEventStreamHasNoData()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $message = null;
         $es->on('message', function ($m) use (&$message) {
@@ -684,22 +505,17 @@ class EventSourceTest extends TestCase
     public function testEmitMessageWithParsedDataAndPreviousIdWhenNotGivenAgainFromEventStream()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timer = null;
-        $loop->expects($this->once())->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
-            $timer = $cb;
-            return true;
-        }));
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timer);
-        $timer();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $message = null;
         $es->on('message', function ($m) use (&$message) {
@@ -716,40 +532,31 @@ class EventSourceTest extends TestCase
     public function testReconnectAfterStreamClosesUsesLastEventIdFromParsedEventStreamForNextRequest()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $timerStart = $timerReconnect = null;
-        $loop->expects($this->exactly(2))->method('addTimer')->withConsecutive(
-            [
-                0,
-                $this->callback(function ($cb) use (&$timerStart) {
-                    $timerStart = $cb;
-                    return true;
-                })
-            ],
-            [
-                3.0,
-                $this->callback(function ($cb) use (&$timerReconnect) {
-                    $timerReconnect = $cb;
-                    return true;
-                })
-            ]
+        $timerReconnect = null;
+        $loop->expects($this->once())->method('addTimer')->with(
+            3.0,
+            $this->callback(function ($cb) use (&$timerReconnect) {
+                $timerReconnect = $cb;
+                return true;
+            })
         );
 
-        $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->exactly(2))->method('get')->withConsecutive(
             ['http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
             ['http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache', 'Last-Event-ID' => '123']]
         )->willReturnOnConsecutiveCalls(
-            \React\Promise\resolve($response),
+            $deferred->promise(),
             new Promise(function () { })
         );
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $this->assertNotNull($timerStart);
-        $timerStart();
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
 
         $stream->write("id:123\n\n");
         $stream->end();

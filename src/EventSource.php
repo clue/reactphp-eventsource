@@ -93,14 +93,10 @@ class EventSource extends EventEmitter
         $this->url = $url;
 
         $this->readyState = self::CONNECTING;
-
-        $this->timer = $loop->addTimer(0, function () {
-            $this->timer = null;
-            $this->send();
-        });
+        $this->request();
     }
 
-    private function send()
+    private function request()
     {
         $headers = array(
             'Accept' => 'text/event-stream',
@@ -160,7 +156,7 @@ class EventSource extends EventEmitter
                     $this->readyState = self::CONNECTING;
                     $this->timer = $this->loop->addTimer($this->reconnectTime, function () {
                         $this->timer = null;
-                        $this->send();
+                        $this->request();
                     });
                 }
             });
@@ -180,7 +176,7 @@ class EventSource extends EventEmitter
 
             $this->timer = $this->loop->addTimer($this->reconnectTime, function () {
                 $this->timer = null;
-                $this->send();
+                $this->request();
             });
         });
     }
