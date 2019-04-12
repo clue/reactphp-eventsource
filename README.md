@@ -8,13 +8,72 @@ built on top of [ReactPHP](https://reactphp.org/).
 **Table of contents**
 
 * [Quickstart example](#quickstart-example)
+* [Usage](#usage)
+    * [EventSource](#eventsource)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
 
 ## Quickstart example
 
+Once [installed](#install), you can use the following code to stream messages
+from any Server-Sent Events (SSE) server endpoint:
+
+```php
+$loop = Factory::create();
+$es = new EventSource('https://example.com/stream.php', $loop);
+
+$es->on('message', function (MessageEvent $message) {
+    //$data = json_decode($message->data);
+    var_dump($message);
+});
+
+$loop->run();
+```
+
 See the [examples](examples).
+
+## Usage
+
+### EventSource
+
+The `EventSource` class is responsible for communication with the remote Server-Sent Events (SSE) endpoint.
+
+The `EventSource` object works very similar to the one found in common
+web browsers. Unless otherwise noted, it follows the same semantics as defined
+under https://html.spec.whatwg.org/multipage/server-sent-events.html
+
+It requires the URL to the remote Server-Sent Events (SSE) endpoint and also
+registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
+in order to handle async HTTP requests.
+
+```php
+$loop = \React\EventLoop\Factory::create();
+
+$es = new \Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop);
+```
+
+If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+proxy servers etc.), you can explicitly pass a custom instance of the
+[`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface)
+to the [`Browser`](https://github.com/clue/reactphp-buzz#browser) instance
+and pass it as an additional argument to the `EventSource` like this:
+
+```php
+$connector = new \React\Socket\Connector($loop, array(
+    'dns' => '127.0.0.1',
+    'tcp' => array(
+        'bindto' => '192.168.10.1:0'
+    ),
+    'tls' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    )
+));
+$browser = new \Clue\React\Buzz\Browser($loop, $connector);
+
+$es = new \Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop, $browser);
+```
 
 ## Install
 

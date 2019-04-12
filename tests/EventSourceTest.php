@@ -7,6 +7,7 @@ use React\Promise\Deferred;
 use RingCentral\Psr7\Response;
 use React\Stream\ThroughStream;
 use Clue\React\Buzz\Message\ReadableBodyStream;
+use Clue\React\Buzz\Browser;
 
 class EventSourceTest extends TestCase
 {
@@ -37,13 +38,17 @@ class EventSourceTest extends TestCase
         new EventSource('ftp://example.com', $loop);
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
-    public function testConstructorCanBeCalledWithoutConnector()
+    public function testConstructorCanBeCalledWithoutBrowser()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        new EventSource('http://example.com', $loop);
+
+        $es = new EventSource('http://example.com', $loop);
+
+        $ref = new ReflectionProperty($es, 'browser');
+        $ref->setAccessible(true);
+        $browser = $ref->getValue($es);
+
+        $this->assertInstanceOf('Clue\React\Buzz\Browser', $browser);
     }
 
     public function testConstructorWillStartTimerToStartConnection()
@@ -54,7 +59,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->never())->method('connect');
 
-        new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        new EventSource('http://example.com', $loop, $browser);
     }
 
 
@@ -71,7 +78,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($pending);
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -90,7 +99,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('tls://example.com:443')->willReturn($pending);
 
-        $es = new EventSource('https://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('https://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -106,7 +117,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->never())->method('connect');
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
         $es->close();
     }
 
@@ -126,7 +139,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($pending);
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -150,7 +165,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -179,7 +196,9 @@ class EventSourceTest extends TestCase
             new Promise(function () { })
         );
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timerStart);
         $timerStart();
@@ -203,7 +222,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -230,7 +251,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -260,7 +283,9 @@ class EventSourceTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn($deferred->promise());
 
-        $es = new EventSource('http://example.com', $loop, $connector);
+        $browser = new Browser($loop, $connector);
+
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timerStart);
         $timerStart();
@@ -281,13 +306,10 @@ class EventSourceTest extends TestCase
 
         $pending = new Promise(function () { });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($pending);
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -307,13 +329,10 @@ class EventSourceTest extends TestCase
             ++$cancelled;
         });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->willReturn($pending);
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -334,13 +353,10 @@ class EventSourceTest extends TestCase
 
         $response = new Response(400, array('Content-Type' => 'text/event-stream'), '');
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $readyState = null;
         $caught = null;
@@ -367,13 +383,10 @@ class EventSourceTest extends TestCase
 
         $response = new Response(200, array(), '');
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $readyState = null;
         $caught = null;
@@ -401,13 +414,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $readyState = null;
         $es->on('open', function () use ($es, &$readyState) {
@@ -432,13 +442,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('CONTENT-type' => 'TEXT/Event-Stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $readyState = null;
         $es->on('open', function () use ($es, &$readyState) {
@@ -463,13 +470,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream;charset=utf-8;foo=bar'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $readyState = null;
         $es->on('open', function () use ($es, &$readyState) {
@@ -495,13 +499,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -529,13 +530,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $es->on('open', function () use ($es) {
             $es->close();
@@ -560,13 +558,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -595,13 +590,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -630,13 +622,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -664,13 +653,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -697,13 +683,10 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timer);
         $timer();
@@ -738,6 +721,7 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
         $browser->expects($this->exactly(2))->method('get')->withConsecutive(
             ['http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
             ['http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache', 'Last-Event-ID' => '123']]
@@ -746,11 +730,7 @@ class EventSourceTest extends TestCase
             new Promise(function () { })
         );
 
-        $es = new EventSource('http://example.com', $loop);
-
-        $ref = new ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
-        $ref->setValue($es, $browser);
+        $es = new EventSource('http://example.com', $loop, $browser);
 
         $this->assertNotNull($timerStart);
         $timerStart();
