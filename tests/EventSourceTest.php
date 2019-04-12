@@ -420,6 +420,68 @@ class EventSourceTest extends TestCase
         $this->assertEquals(EventSource::OPEN, $readyState);
     }
 
+    public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponseWithCaseInsensitiveContentTypeAfterTimer()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = null;
+        $loop->expects($this->at(0))->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
+            $timer = $cb;
+            return true;
+        }));
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('CONTENT-type' => 'TEXT/Event-Stream'), new ReadableBodyStream($stream));
+        $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+
+        $es = new EventSource('http://example.com', $loop);
+
+        $ref = new ReflectionProperty($es, 'browser');
+        $ref->setAccessible(true);
+        $ref->setValue($es, $browser);
+
+        $readyState = null;
+        $es->on('open', function () use ($es, &$readyState) {
+            $readyState = $es->readyState;
+        });
+
+        $this->assertNotNull($timer);
+        $timer();
+
+        $this->assertEquals(EventSource::OPEN, $readyState);
+    }
+
+    public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponseAndSuperfluousParametersAfterTimer()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timer = null;
+        $loop->expects($this->at(0))->method('addTimer')->with(0, $this->callback(function ($cb) use (&$timer) {
+            $timer = $cb;
+            return true;
+        }));
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream;charset=utf-8;foo=bar'), new ReadableBodyStream($stream));
+        $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn(\React\Promise\resolve($response));
+
+        $es = new EventSource('http://example.com', $loop);
+
+        $ref = new ReflectionProperty($es, 'browser');
+        $ref->setAccessible(true);
+        $ref->setValue($es, $browser);
+
+        $readyState = null;
+        $es->on('open', function () use ($es, &$readyState) {
+            $readyState = $es->readyState;
+        });
+
+        $this->assertNotNull($timer);
+        $timer();
+
+        $this->assertEquals(EventSource::OPEN, $readyState);
+    }
+
     public function testCloseResponseStreamWillReturnToStartTimerToReconnectWithoutErrorEvent()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
