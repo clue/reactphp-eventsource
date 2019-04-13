@@ -2,13 +2,51 @@
 
 namespace Clue\React\EventSource;
 
-use React\EventLoop\LoopInterface;
-use Psr\Http\Message\ResponseInterface;
-use React\Stream\ReadableStreamInterface;
 use Clue\React\Buzz\Browser;
 use Evenement\EventEmitter;
-use React\Socket\ConnectorInterface;
+use Psr\Http\Message\ResponseInterface;
+use React\EventLoop\LoopInterface;
+use React\Stream\ReadableStreamInterface;
 
+/**
+ * The `EventSource` class is responsible for communication with the remote Server-Sent Events (SSE) endpoint.
+ *
+ * The `EventSource` object works very similar to the one found in common
+ * web browsers. Unless otherwise noted, it follows the same semantics as defined
+ * under https://html.spec.whatwg.org/multipage/server-sent-events.html
+ *
+ * It requires the URL to the remote Server-Sent Events (SSE) endpoint and also
+ * registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
+ * in order to handle async HTTP requests.
+ *
+ * ```php
+ * $loop = \React\EventLoop\Factory::create();
+ *
+ * $es = new \Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop);
+ * ```
+ *
+ * If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+ * proxy servers etc.), you can explicitly pass a custom instance of the
+ * [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface)
+ * to the [`Browser`](https://github.com/clue/reactphp-buzz#browser) instance
+ * and pass it as an additional argument to the `EventSource` like this:
+ *
+ * ```php
+ * $connector = new \React\Socket\Connector($loop, array(
+ *     'dns' => '127.0.0.1',
+ *     'tcp' => array(
+ *         'bindto' => '192.168.10.1:0'
+ *     ),
+ *     'tls' => array(
+ *         'verify_peer' => false,
+ *         'verify_peer_name' => false
+ *     )
+ * ));
+ * $browser = new \Clue\React\Buzz\Browser($loop, $connector);
+ *
+ * $es = new \Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop, $browser);
+ * ```
+ */
 class EventSource extends EventEmitter
 {
     /**
@@ -40,27 +78,25 @@ class EventSource extends EventEmitter
     private $timer;
     private $reconnectTime = 3.0;
 
-    public function __construct($url, LoopInterface $loop, ConnectorInterface $connector = null)
+    public function __construct($url, LoopInterface $loop, Browser $browser = null)
     {
         $parts = parse_url($url);
         if (!isset($parts['scheme'], $parts['host']) || !in_array($parts['scheme'], array('http', 'https'))) {
             throw new \InvalidArgumentException();
         }
 
-        $browser = new Browser($loop, $connector);
+        if ($browser === null) {
+            $browser = new Browser($loop);
+        }
         $this->browser = $browser->withOptions(array('streaming' => true, 'obeySuccessCode' => false));
         $this->loop = $loop;
         $this->url = $url;
 
         $this->readyState = self::CONNECTING;
-
-        $this->timer = $loop->addTimer(0, function () {
-            $this->timer = null;
-            $this->send();
-        });
+        $this->request();
     }
 
-    private function send()
+    private function request()
     {
         $headers = array(
             'Accept' => 'text/event-stream',
@@ -120,7 +156,7 @@ class EventSource extends EventEmitter
                     $this->readyState = self::CONNECTING;
                     $this->timer = $this->loop->addTimer($this->reconnectTime, function () {
                         $this->timer = null;
-                        $this->send();
+                        $this->request();
                     });
                 }
             });
@@ -140,7 +176,7 @@ class EventSource extends EventEmitter
 
             $this->timer = $this->loop->addTimer($this->reconnectTime, function () {
                 $this->timer = null;
-                $this->send();
+                $this->request();
             });
         });
     }
