@@ -51,6 +51,43 @@ class EventSourceTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Browser', $browser);
     }
 
+        
+    public function testConstructorCanBeCalledWithoutCustomHeaders()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $es = new EventSource('http://example.valid', $loop);
+
+        $ref = new ReflectionProperty($es, 'headers');
+        $ref->setAccessible(true);
+        $headers = $ref->getValue($es);
+
+        $ref = new ReflectionProperty($es, 'defaultHeaders');
+        $ref->setAccessible(true);
+        $defaultHeaders = $ref->getValue($es);
+        
+        $this->assertEquals($defaultHeaders, $headers);
+    }
+
+    public function testConstructorCanBeCalledWithCustomHeaders()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $es = new EventSource('http://example.valid', $loop, null, ['x-custom' => '1234']);
+
+        $ref = new ReflectionProperty($es, 'headers');
+        $ref->setAccessible(true);
+        $headers = $ref->getValue($es);
+
+        // Could have used the defaultHeaders property on EventSource, 
+        // but this ensures the defaults are not altered by hardcoding their values in this test 
+        $this->assertEquals(array(
+            'Accept' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'x-custom' => '1234'
+        ), $headers);
+    }
+
     public function testConstructorWillSendGetRequestThroughGivenBrowser()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
