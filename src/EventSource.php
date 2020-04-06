@@ -77,8 +77,13 @@ class EventSource extends EventEmitter
     private $request;
     private $timer;
     private $reconnectTime = 3.0;
+    private $headers;
+    private $defaultHeaders = [
+        'Accept' => 'text/event-stream',
+        'Cache-Control' => 'no-cache'
+    ];
 
-    public function __construct($url, LoopInterface $loop, Browser $browser = null)
+    public function __construct($url, LoopInterface $loop, Browser $browser = null, array $headers = [])
     {
         $parts = parse_url($url);
         if (!isset($parts['scheme'], $parts['host']) || !in_array($parts['scheme'], array('http', 'https'))) {
@@ -91,6 +96,10 @@ class EventSource extends EventEmitter
         $this->browser = $browser->withRejectErrorResponse(false);
         $this->loop = $loop;
         $this->url = $url;
+        $this->headers = array_merge(
+            $headers,
+            $this->defaultHeaders
+        );
 
         $this->readyState = self::CONNECTING;
         $this->request();
@@ -98,10 +107,7 @@ class EventSource extends EventEmitter
 
     private function request()
     {
-        $headers = array(
-            'Accept' => 'text/event-stream',
-            'Cache-Control' => 'no-cache'
-        );
+        $headers = $this->headers;
         if ($this->lastEventId !== '') {
             $headers['Last-Event-ID'] = $this->lastEventId;
         }
