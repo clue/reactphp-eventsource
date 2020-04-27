@@ -83,7 +83,7 @@ class EventSourceTest extends TestCase
         // but this ensures the defaults are not altered by hardcoding their values in this test 
         $this->assertEquals(array(
             'Accept' => 'text/event-stream',
-            'Cache-Control' => 'only-if-cached',
+            'Cache-Control' => 'no-cache',
             'x-custom' => '1234'
         ), $headers);
     }
