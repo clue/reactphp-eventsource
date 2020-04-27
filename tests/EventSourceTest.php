@@ -69,7 +69,7 @@ class EventSourceTest extends TestCase
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
-        $es = new EventSource('http://example.valid', $loop, null, ['x-custom' => '1234']);
+        $es = new EventSource('http://example.valid', $loop, null, ['x-custom' => '1234', 'Cache-Control' => 'only-if-cached']);
 
         $ref = new ReflectionProperty($es, 'headers');
         $ref->setAccessible(true);
@@ -79,7 +79,7 @@ class EventSourceTest extends TestCase
         // but this ensures the defaults are not altered by hardcoding their values in this test 
         $this->assertEquals(array(
             'Accept' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
+            'Cache-Control' => 'only-if-cached',
             'x-custom' => '1234'
         ), $headers);
     }
