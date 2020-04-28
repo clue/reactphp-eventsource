@@ -69,7 +69,12 @@ class EventSourceTest extends TestCase
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
-        $es = new EventSource('http://example.valid', $loop, null, ['x-custom' => '1234', 'Cache-Control' => 'only-if-cached']);
+        $es = new EventSource('http://example.valid', $loop, null, array(
+            'x-custom' => '1234',
+            'Cache-Control' => 'only-if-cached',
+            'ACCEPT' => 'no-store',
+            'cache-control' => 'none'
+        ));
 
         $ref = new ReflectionProperty($es, 'headers');
         $ref->setAccessible(true);

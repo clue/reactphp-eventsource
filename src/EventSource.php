@@ -96,13 +96,31 @@ class EventSource extends EventEmitter
         $this->browser = $browser->withRejectErrorResponse(false);
         $this->loop = $loop;
         $this->url = $url;
-        $this->headers = array_merge(
-            $headers,
-            $this->defaultHeaders
-        );
+
+        $this->headers = $this->mergeHeaders($headers);
 
         $this->readyState = self::CONNECTING;
         $this->request();
+    }
+
+    private function mergeHeaders(array $headers = [])
+    {
+        if ($headers === []) {
+            return $this->defaultHeaders;
+        }
+
+        // HTTP headers are case insensitive, we do not want to have different cases for the same (default) header
+        // Convert default headers to lowercase, to ease the custom headers potential override comparison
+        $loweredDefaults = array_change_key_case($this->defaultHeaders, CASE_LOWER);
+        foreach($headers as $k => $v) {
+            if (array_key_exists(strtolower($k), $loweredDefaults)) {
+                unset($headers[$k]);
+            }
+        }
+        return array_merge(
+            $headers,
+            $this->defaultHeaders
+        );
     }
 
     private function request()
