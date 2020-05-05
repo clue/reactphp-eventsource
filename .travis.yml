@@ -8,6 +8,7 @@ php:
   - 7.1
   - 7.2
   - 7.3
+  - 7.4
 
 # lock distro so new future defaults will not break the build
 dist: trusty
