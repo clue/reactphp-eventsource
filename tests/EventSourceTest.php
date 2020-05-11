@@ -1,5 +1,7 @@
 <?php
 
+namespace Clue\Tests\React\EventSource;
+
 use PHPUnit\Framework\TestCase;
 use Clue\React\EventSource\EventSource;
 use React\Promise\Promise;
@@ -44,7 +46,7 @@ class EventSourceTest extends TestCase
 
         $es = new EventSource('http://example.invalid', $loop);
 
-        $ref = new ReflectionProperty($es, 'browser');
+        $ref = new \ReflectionProperty($es, 'browser');
         $ref->setAccessible(true);
         $browser = $ref->getValue($es);
 
@@ -98,7 +100,7 @@ class EventSourceTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $pending = new Promise(function () { }, function () {
-            throw new RuntimeException();
+            throw new \RuntimeException();
         });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
         $browser->expects($this->once())->method('withOptions')->willReturnSelf();
@@ -131,7 +133,7 @@ class EventSourceTest extends TestCase
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $deferred->reject(new RuntimeException());
+        $deferred->reject(new \RuntimeException());
     }
 
     public function testConstructorWillStartGetRequestThatWillStartRetryTimerThatWillRetryGetRequestWhenInitialGetRequestRejects()
@@ -156,7 +158,7 @@ class EventSourceTest extends TestCase
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $deferred->reject(new RuntimeException());
+        $deferred->reject(new \RuntimeException());
 
         $this->assertNotNull($timerRetry);
         $timerRetry();
@@ -181,7 +183,7 @@ class EventSourceTest extends TestCase
         $es->on('error', function ($e) use (&$caught) {
             $caught = $e;
         });
-        $deferred->reject($expected = new RuntimeException());
+        $deferred->reject($expected = new \RuntimeException());
 
         $this->assertSame($expected, $caught);
     }
@@ -200,7 +202,7 @@ class EventSourceTest extends TestCase
         $es->on('error', function () use ($es) {
             $es->close();
         });
-        $deferred->reject(new RuntimeException());
+        $deferred->reject(new \RuntimeException());
     }
 
     public function testCloseAfterGetRequestFromConstructorFailsWillCancelPendingRetryTimer()
@@ -220,7 +222,7 @@ class EventSourceTest extends TestCase
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
-        $deferred->reject(new RuntimeException());
+        $deferred->reject(new \RuntimeException());
 
         $es->close();
     }

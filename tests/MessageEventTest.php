@@ -1,5 +1,7 @@
 <?php
 
+namespace Clue\Tests\React\EventSource;
+
 use PHPUnit\Framework\TestCase;
 use Clue\React\EventSource\MessageEvent;
 
