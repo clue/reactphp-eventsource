@@ -88,7 +88,7 @@ class EventSource extends EventEmitter
         if ($browser === null) {
             $browser = new Browser($loop);
         }
-        $this->browser = $browser->withOptions(array('streaming' => true, 'obeySuccessCode' => false));
+        $this->browser = $browser->withRejectErrorResponse(false);
         $this->loop = $loop;
         $this->url = $url;
 
@@ -106,7 +106,8 @@ class EventSource extends EventEmitter
             $headers['Last-Event-ID'] = $this->lastEventId;
         }
 
-        $this->request = $this->browser->get(
+        $this->request = $this->browser->requestStreaming(
+            'GET',
             $this->url,
             $headers
         );

@@ -59,8 +59,8 @@ class EventSourceTest extends TestCase
 
         $pending = new Promise(function () { });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($pending);
+        $browser->expects($this->once())->method('withRejectErrorResponse')->with(false)->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->with('GET', 'http://example.com')->willReturn($pending);
 
         $es = new EventSource('http://example.com', $loop, $browser);
     }
@@ -71,8 +71,8 @@ class EventSourceTest extends TestCase
 
         $pending = new Promise(function () { });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('https://example.com')->willReturn($pending);
+        $browser->expects($this->once())->method('withRejectErrorResponse')->with(false)->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->with('GET', 'https://example.com')->willReturn($pending);
 
         $es = new EventSource('https://example.com', $loop, $browser);
     }
@@ -86,8 +86,8 @@ class EventSourceTest extends TestCase
             ++$cancelled;
         });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($pending);
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($pending);
 
         $es = new EventSource('http://example.com', $loop, $browser);
         $es->close();
@@ -103,8 +103,8 @@ class EventSourceTest extends TestCase
             throw new \RuntimeException();
         });
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($pending);
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($pending);
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -128,8 +128,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -150,8 +150,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->exactly(2))->method('get')->willReturnOnConsecutiveCalls(
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->exactly(2))->method('requestStreaming')->willReturnOnConsecutiveCalls(
             $deferred->promise(),
             new Promise(function () { })
         );
@@ -174,8 +174,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -194,8 +194,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -217,8 +217,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -233,8 +233,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -258,8 +258,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -283,8 +283,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -306,8 +306,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -329,8 +329,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -356,8 +356,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -382,8 +382,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -405,8 +405,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -432,8 +432,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -459,8 +459,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -485,8 +485,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -510,8 +510,8 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->once())->method('get')->with('http://example.com')->willReturn($deferred->promise());
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
 
         $es = new EventSource('http://example.com', $loop, $browser);
 
@@ -545,10 +545,10 @@ class EventSourceTest extends TestCase
 
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('Clue\React\Buzz\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withOptions')->willReturnSelf();
-        $browser->expects($this->exactly(2))->method('get')->withConsecutive(
-            ['http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
-            ['http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache', 'Last-Event-ID' => '123']]
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->exactly(2))->method('requestStreaming')->withConsecutive(
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache', 'Last-Event-ID' => '123']]
         )->willReturnOnConsecutiveCalls(
             $deferred->promise(),
             new Promise(function () { })

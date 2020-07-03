@@ -18,7 +18,7 @@
     },
     "require": {
         "php": ">=5.4",
-        "clue/buzz-react": "^2.5",
+        "clue/buzz-react": "^2.9",
         "evenement/evenement": "^3.0 || ^2.0"
     },
     "require-dev": {
