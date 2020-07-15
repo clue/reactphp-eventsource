@@ -346,7 +346,7 @@ class EventSourceTest extends TestCase
         $this->assertEquals(EventSource::OPEN, $readyState);
     }
 
-    public function testCloseResponseStreamWillStartRetryTimerWithoutErrorEvent()
+    public function testCloseResponseStreamWillStartRetryTimerWithErrorEvent()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addTimer')->with(
@@ -373,7 +373,33 @@ class EventSourceTest extends TestCase
         $stream->close();
 
         $this->assertEquals(EventSource::CONNECTING, $es->readyState);
-        $this->assertNull($error);
+        $this->assertInstanceOf('RuntimeException', $error);
+        $this->assertEquals('Stream closed, reconnecting in 3 seconds', $error->getMessage());
+    }
+
+    public function testCloseResponseStreamWillNotStartRetryTimerWhenEventSourceIsClosedFromErrorHandler()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
+
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $loop, $browser);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $es->on('error', function ($e) use ($es) {
+            $es->close();
+        });
+
+        $stream->close();
+
+        $this->assertEquals(EventSource::CLOSED, $es->readyState);
     }
 
     public function testCloseFromOpenEventWillCloseResponseStreamAndCloseEventSource()

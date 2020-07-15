@@ -17,6 +17,10 @@ $es->on('message', function ($message) {
     var_dump($message);
 });
 
+$es->on('open', function () {
+    echo 'open' . PHP_EOL;
+});
+
 $es->on('error', function (Exception $e) use ($es) {
     if ($es->readyState === EventSource::CLOSED) {
         echo 'Permanent error: ' . $e->getMessage() . PHP_EOL;

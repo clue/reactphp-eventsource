@@ -155,6 +155,12 @@ class EventSource extends EventEmitter
                 $this->request = null;
                 if ($this->readyState === self::OPEN) {
                     $this->readyState = self::CONNECTING;
+
+                    $this->emit('error', [new \RuntimeException('Stream closed, reconnecting in ' . $this->reconnectTime . ' seconds')]);
+                    if ($this->readyState === self::CLOSED) {
+                        return;
+                    }
+
                     $this->timer = $this->loop->addTimer($this->reconnectTime, function () {
                         $this->timer = null;
                         $this->request();
@@ -170,7 +176,7 @@ class EventSource extends EventEmitter
                 return;
             }
 
-            $this->emit('error', array($e));
+            $this->emit('error', [$e]);
             if ($this->readyState === self::CLOSED) {
                 return;
             }
