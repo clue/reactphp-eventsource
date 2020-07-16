@@ -21,9 +21,9 @@ from any Server-Sent Events (SSE) server endpoint:
 
 ```php
 $loop = Factory::create();
-$es = new EventSource('https://example.com/stream.php', $loop);
+$es = new Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop);
 
-$es->on('message', function (MessageEvent $message) {
+$es->on('message', function (Clue\React\EventSource\MessageEvent $message) {
     //$data = json_decode($message->data);
     var_dump($message);
 });
@@ -48,19 +48,19 @@ registers everything with the main [`EventLoop`](https://github.com/reactphp/eve
 in order to handle async HTTP requests.
 
 ```php
-$loop = \React\EventLoop\Factory::create();
+$loop = React\EventLoop\Factory::create();
 
-$es = new \Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop);
+$es = new Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop);
 ```
 
 If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
 proxy servers etc.), you can explicitly pass a custom instance of the
 [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface)
-to the [`Browser`](https://github.com/clue/reactphp-buzz#browser) instance
+to the [`Browser`](https://github.com/reactphp/http#browser) instance
 and pass it as an additional argument to the `EventSource` like this:
 
 ```php
-$connector = new \React\Socket\Connector($loop, array(
+$connector = new React\Socket\Connector($loop, array(
     'dns' => '127.0.0.1',
     'tcp' => array(
         'bindto' => '192.168.10.1:0'
@@ -70,9 +70,9 @@ $connector = new \React\Socket\Connector($loop, array(
         'verify_peer_name' => false
     )
 ));
-$browser = new \Clue\React\Buzz\Browser($loop, $connector);
+$browser = new React\Http\Browser($loop, $connector);
 
-$es = new \Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop, $browser);
+$es = new Clue\React\EventSource\EventSource('https://example.com/stream.php', $loop, $browser);
 ```
 
 ## Install
