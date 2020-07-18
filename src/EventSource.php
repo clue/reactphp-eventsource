@@ -151,7 +151,8 @@ class EventSource extends EventEmitter
                 }
             });
 
-            $stream->on('close', function () {
+            $stream->on('close', function () use (&$buffer) {
+                $buffer = '';
                 $this->request = null;
                 if ($this->readyState === self::OPEN) {
                     $this->readyState = self::CONNECTING;

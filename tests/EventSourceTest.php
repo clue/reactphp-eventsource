@@ -557,6 +557,34 @@ class EventSourceTest extends TestCase
         $this->assertEquals('123', $message->lastEventId);
     }
 
+    public function testEmitMessageOnceWhenCallingCloseFromMessageHandlerFromEventStreamWithMultipleMessages()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $loop, $browser);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $message = null;
+        $es->on('message', function ($m) use (&$message, $es) {
+            $message = $m;
+            $es->close();
+        });
+
+        $stream->write("id:1\ndata:hello\n\nid:2\ndata:world\n\n");
+
+        $this->assertInstanceOf('Clue\React\EventSource\MessageEvent', $message);
+        $this->assertEquals('1', $message->lastEventId);
+        $this->assertEquals('1', $es->lastEventId);
+    }
+
     public function testReconnectAfterStreamClosesUsesLastEventIdFromParsedEventStreamForNextRequest()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
