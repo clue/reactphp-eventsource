@@ -6,9 +6,9 @@ use Clue\React\EventSource\EventSource;
 use PHPUnit\Framework\TestCase;
 use React\Promise\Promise;
 use React\Promise\Deferred;
-use React\Http\Browser;
 use React\Http\Io\ReadableBodyStream;
 use React\Stream\ThroughStream;
+use ReflectionProperty;
 use RingCentral\Psr7\Response;
 
 class EventSourceTest extends TestCase
@@ -47,7 +47,7 @@ class EventSourceTest extends TestCase
         $this->assertInstanceOf('React\Http\Browser', $browser);
     }
 
-        
+
     public function testConstructorCanBeCalledWithoutCustomHeaders()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -61,7 +61,7 @@ class EventSourceTest extends TestCase
         $ref = new ReflectionProperty($es, 'defaultHeaders');
         $ref->setAccessible(true);
         $defaultHeaders = $ref->getValue($es);
-        
+
         $this->assertEquals($defaultHeaders, $headers);
     }
 
@@ -80,8 +80,8 @@ class EventSourceTest extends TestCase
         $ref->setAccessible(true);
         $headers = $ref->getValue($es);
 
-        // Could have used the defaultHeaders property on EventSource, 
-        // but this ensures the defaults are not altered by hardcoding their values in this test 
+        // Could have used the defaultHeaders property on EventSource,
+        // but this ensures the defaults are not altered by hardcoding their values in this test
         $this->assertEquals(array(
             'Accept' => 'text/event-stream',
             'Cache-Control' => 'no-cache',
