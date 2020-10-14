@@ -13,30 +13,24 @@ use RingCentral\Psr7\Response;
 
 class EventSourceTest extends TestCase
 {
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testConstructorThrowsIfFirstArgumentIsNotAnUri()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $this->setExpectedException('InvalidArgumentException');
         new EventSource('///', $loop);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testConstructorThrowsIfUriArgumentDoesNotIncludeScheme()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $this->setExpectedException('InvalidArgumentException');
         new EventSource('example.com', $loop);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testConstructorThrowsIfUriArgumentIncludesInvalidScheme()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $this->setExpectedException('InvalidArgumentException');
         new EventSource('ftp://example.com', $loop);
     }
 
@@ -619,5 +613,22 @@ class EventSourceTest extends TestCase
 
         $this->assertNotNull($timerReconnect);
         $timerReconnect();
+    }
+
+    public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
+    {
+        if (method_exists($this, 'expectException')) {
+            // PHPUnit 5.2+
+            $this->expectException($exception);
+            if ($exceptionMessage !== '') {
+                $this->expectExceptionMessage($exceptionMessage);
+            }
+            if ($exceptionCode !== null) {
+                $this->expectExceptionCode($exceptionCode);
+            }
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 5.1
+            parent::setExpectedException($exception, $exceptionMessage, $exceptionCode);
+        }
     }
 }
