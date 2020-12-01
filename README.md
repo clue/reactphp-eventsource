@@ -89,7 +89,7 @@ $ composer require clue/reactphp-eventsource:dev-master
 ```
 
 This project aims to run on any platform and thus does not require any PHP
-extensions and supports running on legacy PHP 5.4 through current PHP 7+.
+extensions and supports running on legacy PHP 5.4 through current PHP 8+.
 It's *highly recommended to use PHP 7+* for this project.
 
 ## Tests
