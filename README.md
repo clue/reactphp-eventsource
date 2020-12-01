@@ -1,4 +1,6 @@
-# clue/reactphp-eventsource [![Build Status](https://travis-ci.org/clue/reactphp-eventsource.svg?branch=master)](https://travis-ci.org/clue/reactphp-eventsource)
+# clue/reactphp-eventsource
+
+[![CI status](https://github.com/clue/reactphp-eventsource/workflows/CI/badge.svg)](https://github.com/clue/reactphp-eventsource/actions)
 
 Event-driven EventSource client, receiving streaming messages from any HTML5 Server-Sent Events (SSE) server,
 built on top of [ReactPHP](https://reactphp.org/).
