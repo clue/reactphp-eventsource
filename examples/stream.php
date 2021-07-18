@@ -1,18 +1,14 @@
 <?php
 
-use React\EventLoop\Factory;
-use Clue\React\EventSource\EventSource;
-
 require __DIR__ . '/../vendor/autoload.php';
 
 if (!isset($argv[1]) || isset($argv[2])) {
     exit('Usage error: stream.php <uri>' . PHP_EOL);
 }
 
-$loop = Factory::create();
-$es = new EventSource($argv[1], $loop);
+$es = new Clue\React\EventSource\EventSource($argv[1]);
 
-$es->on('message', function ($message) {
+$es->on('message', function (Clue\React\EventSource\MessageEvent $message) {
     //$data = json_decode($message->data);
     var_dump($message);
 });
@@ -22,11 +18,9 @@ $es->on('open', function () {
 });
 
 $es->on('error', function (Exception $e) use ($es) {
-    if ($es->readyState === EventSource::CLOSED) {
+    if ($es->readyState === Clue\React\EventSource\EventSource::CLOSED) {
         echo 'Permanent error: ' . $e->getMessage() . PHP_EOL;
     } else {
         echo 'Temporary error: ' . $e->getMessage() . PHP_EOL;
     }
 });
-
-$loop->run();

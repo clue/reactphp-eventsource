@@ -34,6 +34,19 @@ class EventSourceTest extends TestCase
         new EventSource('ftp://example.com', $loop);
     }
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $es = new EventSource('http://example.invalid');
+
+        $ref = new \ReflectionProperty($es, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($es);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+
+        $es->close();
+    }
+
     public function testConstructorCanBeCalledWithoutBrowser()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
