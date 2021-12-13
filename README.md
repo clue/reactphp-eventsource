@@ -49,12 +49,6 @@ Its constructor simply requires the URL to the remote Server-Sent Events (SSE) e
 $es = new Clue\React\EventSource\EventSource('https://example.com/stream.php');
 ```
 
-This class takes an optional `LoopInterface|null $loop` parameter that can be used to
-pass the event loop instance to use for this object. You can use a `null` value
-here in order to use the [default loop](https://github.com/reactphp/event-loop#loop).
-This value SHOULD NOT be given unless you're sure you want to explicitly use a
-given event loop instance.
-
 If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
 proxy servers etc.), you can explicitly pass a custom instance of the
 [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface)
@@ -74,8 +68,14 @@ $connector = new React\Socket\Connector([
 ]);
 $browser = new React\Http\Browser($connector);
 
-$es = new Clue\React\EventSource\EventSource('https://example.com/stream.php', null, $browser);
+$es = new Clue\React\EventSource\EventSource('https://example.com/stream.php', $browser);
 ```
+
+This class takes an optional `LoopInterface|null $loop` parameter that can be used to
+pass the event loop instance to use for this object. You can use a `null` value
+here in order to use the [default loop](https://github.com/reactphp/event-loop#loop).
+This value SHOULD NOT be given unless you're sure you want to explicitly use a
+given event loop instance.
 
 ## Install
 
