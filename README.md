@@ -62,7 +62,7 @@ to the [`Browser`](https://github.com/reactphp/http#browser) instance
 and pass it as an additional argument to the `EventSource` like this:
 
 ```php
-$connector = new React\Socket\Connector(null, [
+$connector = new React\Socket\Connector([
     'dns' => '127.0.0.1',
     'tcp' => [
         'bindto' => '192.168.10.1:0'
@@ -72,7 +72,7 @@ $connector = new React\Socket\Connector(null, [
         'verify_peer_name' => false
     ]
 ]);
-$browser = new React\Http\Browser(null, $connector);
+$browser = new React\Http\Browser($connector);
 
 $es = new Clue\React\EventSource\EventSource('https://example.com/stream.php', null, $browser);
 ```

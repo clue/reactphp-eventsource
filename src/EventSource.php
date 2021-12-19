@@ -96,7 +96,7 @@ class EventSource extends EventEmitter
 
         $this->loop = $loop ?: Loop::get();
         if ($browser === null) {
-            $browser = new Browser($this->loop);
+            $browser = new Browser(null, $this->loop);
         }
         $this->browser = $browser->withRejectErrorResponse(false);
         $this->url = $url;
