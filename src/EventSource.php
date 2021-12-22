@@ -82,12 +82,52 @@ class EventSource extends EventEmitter
     private $reconnectTime = 3.0;
 
     /**
+     * The `EventSource` class is responsible for communication with the remote Server-Sent Events (SSE) endpoint.
+     *
+     * The `EventSource` object works very similar to the one found in common
+     * web browsers. Unless otherwise noted, it follows the same semantics as defined
+     * under https://html.spec.whatwg.org/multipage/server-sent-events.html
+     *
+     * Its constructor simply requires the URL to the remote Server-Sent Events (SSE) endpoint:
+     *
+     * ```php
+     * $es = new Clue\React\EventSource\EventSource('https://example.com/stream.php');
+     * ```
+     *
+     * If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+     * proxy servers etc.), you can explicitly pass a custom instance of the
+     * [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface)
+     * to the [`Browser`](https://github.com/reactphp/http#browser) instance
+     * and pass it as an additional argument to the `EventSource` like this:
+     *
+     * ```php
+     * $connector = new React\Socket\Connector([
+     *     'dns' => '127.0.0.1',
+     *     'tcp' => [
+     *         'bindto' => '192.168.10.1:0'
+     *     ],
+     *     'tls' => [
+     *         'verify_peer' => false,
+     *         'verify_peer_name' => false
+     *     ]
+     * ]);
+     * $browser = new React\Http\Browser($connector);
+     *
+     * $es = new Clue\React\EventSource\EventSource('https://example.com/stream.php', $browser);
+     * ```
+     *
+     * This class takes an optional `LoopInterface|null $loop` parameter that can be used to
+     * pass the event loop instance to use for this object. You can use a `null` value
+     * here in order to use the [default loop](https://github.com/reactphp/event-loop#loop).
+     * This value SHOULD NOT be given unless you're sure you want to explicitly use a
+     * given event loop instance.
+     *
      * @param string         $url
-     * @param ?LoopInterface $loop
      * @param ?Browser       $browser
+     * @param ?LoopInterface $loop
      * @throws \InvalidArgumentException for invalid URL
      */
-    public function __construct($url, LoopInterface $loop = null, Browser $browser = null)
+    public function __construct($url, Browser $browser = null, LoopInterface $loop = null)
     {
         $parts = parse_url($url);
         if (!isset($parts['scheme'], $parts['host']) || !in_array($parts['scheme'], array('http', 'https'))) {
