@@ -599,4 +599,117 @@ class EventSourceTest extends TestCase
             parent::setExpectedException($exception, $exceptionMessage, $exceptionCode);
         }
     }
+
+    public function testSplitMessagesWithCarriageReturn()
+    {
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $browser);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $messages = [];
+        $es->on('message', function ($m) use (&$messages) {
+            $messages[] = $m;
+        });
+
+        $stream->write("data:hello\r\rdata:hi\r\r");
+
+        $expected = ['hello', 'hi'];
+        $this->assertCount(count($expected), $messages);
+        foreach ($messages as $i => $message) {
+            $this->assertInstanceOf('Clue\React\EventSource\MessageEvent', $message);
+            $this->assertEquals($expected[$i], $message->data);
+        }
+    }
+
+    public function testSplitMessagesWithWindowsEndOfLineSequence()
+    {
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $browser);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $messages = [];
+        $es->on('message', function ($m) use (&$messages) {
+            $messages[] = $m;
+        });
+
+        $stream->write("data:hello\r\n\r\ndata:hi\r\n\r\n");
+
+        $expected = ['hello', 'hi'];
+        $this->assertCount(count($expected), $messages);
+        foreach ($messages as $i => $message) {
+            $this->assertInstanceOf('Clue\React\EventSource\MessageEvent', $message);
+            $this->assertEquals($expected[$i], $message->data);
+        }
+    }
+
+    public function testSplitMessagesWithBufferedWindowsEndOfLineSequence()
+    {
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $browser);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $messages = [];
+        $es->on('message', function ($m) use (&$messages) {
+            $messages[] = $m;
+        });
+
+        $stream->write("data:hello\r\n\r");
+        $stream->write("\ndata:hi\r\n\r\n");
+
+        $expected = ['hello', 'hi'];
+        $this->assertCount(count($expected), $messages);
+        foreach ($messages as $i => $message) {
+            $this->assertInstanceOf('Clue\React\EventSource\MessageEvent', $message);
+            $this->assertEquals($expected[$i], $message->data);
+        }
+    }
+
+    public function testSplitMessagesWithMixedEndOfLine()
+    {
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $browser);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $messages = [];
+        $es->on('message', function ($m) use (&$messages) {
+            $messages[] = $m;
+        });
+
+        $stream->write("data: LF CR\n\rdata: CRLF LF\r\n\ndata: CRLF CR\r\n\rdata: LF CRLF\n\r\ndata: CR CRLF\r\r\n");
+
+        $expected = ['LF CR', 'CRLF LF', 'CRLF CR', 'LF CRLF', 'CR CRLF'];
+        $this->assertCount(count($expected), $messages);
+        foreach ($messages as $i => $message) {
+            $this->assertInstanceOf('Clue\React\EventSource\MessageEvent', $message);
+            $this->assertEquals($expected[$i], $message->data);
+        }
+    }
 }
