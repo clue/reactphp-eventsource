@@ -11,23 +11,30 @@ class MessageEvent
      */
     public static function parse($data)
     {
-        $message = new MessageEvent();
+        $message = new self();
 
-        preg_match_all('/^([a-z]*)\: ?(.*)/m', $data, $matches, PREG_SET_ORDER);
-        foreach ($matches as $match) {
-            if ($match[1] === 'data') {
-                $message->data .= $match[2] . "\n";
-            } elseif ($match[1] === 'id') {
-                $message->lastEventId .= $match[2];
-            } elseif ($match[1] === 'event') {
-                $message->type = $match[2];
+        $lines = preg_split(
+            '/\r\n|\r(?!\n)|\n/S',
+            $data
+        );
+        foreach ($lines as $line) {
+            $name = strstr($line, ':', true);
+            $value = substr(strstr($line, ':'), 1);
+            if (isset($value[0]) && $value[0] === ' ') {
+                $value = substr($value, 1);
+            }
+            if ($name === 'data') {
+                $message->data .= $value . "\n";
+            } elseif ($name === 'id') {
+                $message->lastEventId .= $value;
+            } elseif ($name === 'event') {
+                $message->type = $value;
             }
         }
 
         if (substr($message->data, -1) === "\n") {
             $message->data = substr($message->data, 0, -1);
         }
-        //$message->data = rtrim($message->data, "\r\n");
 
         return $message;
     }

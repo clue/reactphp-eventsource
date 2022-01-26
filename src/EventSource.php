@@ -181,12 +181,13 @@ class EventSource extends EventEmitter
 
             $buffer = '';
             $stream->on('data', function ($chunk) use (&$buffer, $stream) {
-                $buffer .= $chunk;
+                $messageEvents = preg_split(
+                    '/(?:\r\n|\r(?!\n)|\n){2}/S',
+                    $buffer . $chunk
+                );
+                $buffer = array_pop($messageEvents);
 
-                while (($pos = strpos($buffer, "\n\n")) !== false) {
-                    $data = substr($buffer, 0, $pos);
-                    $buffer = substr($buffer, $pos + 2);
-
+                foreach ($messageEvents as $data) {
                     $message = MessageEvent::parse($data);
                     if ($message->lastEventId === null) {
                         $message->lastEventId = $this->lastEventId;
@@ -196,6 +197,9 @@ class EventSource extends EventEmitter
 
                     if ($message->data !== '') {
                         $this->emit($message->type, array($message));
+                        if ($this->readyState === self::CLOSED) {
+                            break;
+                        }
                     }
                 }
             });
