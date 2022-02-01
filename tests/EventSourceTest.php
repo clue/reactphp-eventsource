@@ -583,6 +583,78 @@ class EventSourceTest extends TestCase
         $timerReconnect();
     }
 
+    public function testReconnectAfterStreamClosesUsesSpecifiedRetryTime()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timerReconnect = null;
+        $loop->expects($this->once())->method('addTimer')->with(
+            2.543,
+            $this->callback(function ($cb) use (&$timerReconnect) {
+                $timerReconnect = $cb;
+                return true;
+            })
+        );
+
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->exactly(2))->method('requestStreaming')->withConsecutive(
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']]
+        )->willReturnOnConsecutiveCalls(
+            $deferred->promise(),
+            new Promise(function () { })
+        );
+
+        $es = new EventSource('http://example.com', $browser, $loop);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $stream->write("retry:2543\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+    }
+
+    public function testReconnectAfterStreamClosesIgnoresInvalidRetryTime()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timerReconnect = null;
+        $loop->expects($this->once())->method('addTimer')->with(
+            3,
+            $this->callback(function ($cb) use (&$timerReconnect) {
+                $timerReconnect = $cb;
+                return true;
+            })
+        );
+
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->exactly(2))->method('requestStreaming')->withConsecutive(
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']]
+        )->willReturnOnConsecutiveCalls(
+            $deferred->promise(),
+            new Promise(function () { })
+        );
+
+        $es = new EventSource('http://example.com', $browser, $loop);
+
+        $stream = new ThroughStream();
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $deferred->resolve($response);
+
+        $stream->write("retry:now\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+    }
+
     public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
     {
         if (method_exists($this, 'expectException')) {

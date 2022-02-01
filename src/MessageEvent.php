@@ -29,6 +29,8 @@ class MessageEvent
                 $message->lastEventId .= $value;
             } elseif ($name === 'event') {
                 $message->type = $value;
+            } elseif ($name === 'retry' && $value === (string)(int)$value && $value >= 0) {
+                $message->retry = (int)$value;
             }
         }
 
@@ -53,4 +55,10 @@ class MessageEvent
      * @var string
      */
     public $type = 'message';
+
+    /**
+     * @internal
+     * @var ?int
+     */
+    public $retry;
 }

@@ -55,4 +55,28 @@ class MessageEventTest extends TestCase
 
         $this->assertEquals("hello\n", $message->data);
     }
+
+    public function retryTimeDataProvider()
+    {
+        return [
+            ['retry: 1234', 1234,],
+            ['retry: 0', 0,],
+            ['retry: ' . PHP_INT_MAX, PHP_INT_MAX,],
+            ['retry: ' . PHP_INT_MAX . '9', null,],
+            ['retry: 1.234', null,],
+            ['retry: now', null,],
+            ['retry: -1', null,],
+            ['retry: -1.234', null,],
+        ];
+    }
+
+    /**
+     * @dataProvider retryTimeDataProvider
+     */
+    public function testParseRetryTime($input, $expected)
+    {
+        $message = MessageEvent::parse($input);
+
+        $this->assertSame($expected, $message->retry);
+    }
 }
