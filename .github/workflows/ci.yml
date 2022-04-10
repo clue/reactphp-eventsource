@@ -6,7 +6,8 @@ on:
 
 jobs:
   PHPUnit:
-    runs-on: ubuntu-latest
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         php:
@@ -21,12 +22,12 @@ jobs:
           - 5.4
     steps:
       - uses: actions/checkout@v2
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          coverage: xdebug
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
-        if: matrix.php >= 7.3
+        if: ${{ matrix.php >= 7.3 }}
       - run: vendor/bin/phpunit --coverage-text -c phpunit.xml.legacy
-        if: matrix.php < 7.3
+        if: ${{ matrix.php < 7.3 }}
