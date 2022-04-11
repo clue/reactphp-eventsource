@@ -3,8 +3,9 @@
 [![CI status](https://github.com/clue/reactphp-eventsource/actions/workflows/ci.yml/badge.svg)](https://github.com/clue/reactphp-eventsource/actions)
 [![installs on Packagist](https://img.shields.io/packagist/dt/clue/reactphp-eventsource?color=blue&label=installs%20on%20Packagist)](https://packagist.org/packages/clue/reactphp-eventsource)
 
-Event-driven EventSource client, receiving streaming messages from any HTML5 Server-Sent Events (SSE) server,
-built on top of [ReactPHP](https://reactphp.org/).
+Instant real-time updates. Lightweight EventSource client receiving live
+messages via HTML5 Server-Sent Events (SSE). Fast stream processing built on top
+of [ReactPHP](https://reactphp.org/)'s event-driven architecture.
 
 > Note: This project is in early alpha stage! Feel free to report any issues you encounter.
 
@@ -26,6 +27,7 @@ built on top of [ReactPHP](https://reactphp.org/).
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
+* [More](#more)
 
 ## Quickstart example
 
@@ -335,3 +337,12 @@ This project is released under the permissive [MIT license](LICENSE).
 
 > Did you know that I offer custom development services and issuing invoices for
   sponsorships of releases and for contributions? Contact me (@clue) for details.
+
+## More
+
+* If you want to learn more about processing streams of data, refer to the documentation of
+  the underlying [react/stream](https://github.com/reactphp/stream) component.
+
+* If you're looking to run the server side of your Server-Sent Events (SSE)
+  application, you may want to use the powerful server implementation provided
+  by [Framework X](https://framework-x.org/).
