@@ -52,11 +52,6 @@ use React\Stream\ReadableStreamInterface;
  */
 class EventSource extends EventEmitter
 {
-    /**
-     * @var string (read-only) last event ID received
-     */
-    public $lastEventId = '';
-
     // ready state
     const CONNECTING = 0;
     const OPEN = 1;
@@ -67,18 +62,46 @@ class EventSource extends EventEmitter
      * @see self::CONNECTING
      * @see self::OPEN
      * @see self::CLOSED
+     * @psalm-readonly-allow-private-mutation
      */
     public $readyState = self::CLOSED;
 
     /**
      * @var string (read-only) URL
+     * @readonly
      */
     public $url;
 
+    /**
+     * @var string last event ID received
+     */
+    private $lastEventId = '';
+
+    /**
+     * @var LoopInterface
+     * @readonly
+     */
     private $loop;
+
+    /**
+     * @var Browser
+     * @readonly
+     */
     private $browser;
+
+    /**
+     * @var ?\React\Promise\PromiseInterface
+     */
     private $request;
+
+    /**
+     * @var ?\React\EventLoop\TimerInterface
+     */
     private $timer;
+
+    /**
+     * @var float
+     */
     private $reconnectTime = 3.0;
 
     /**

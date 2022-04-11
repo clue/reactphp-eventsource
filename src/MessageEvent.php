@@ -43,22 +43,26 @@ class MessageEvent
 
     /**
      * @var string
+     * @readonly
      */
     public $data = '';
 
     /**
      * @var ?string
+     * @readonly
      */
     public $lastEventId = null;
 
     /**
      * @var string
+     * @readonly
      */
     public $type = 'message';
 
     /**
      * @internal
      * @var ?int
+     * @readonly
      */
     public $retry;
 }
