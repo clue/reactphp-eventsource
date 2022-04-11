@@ -7,10 +7,9 @@ Instant real-time updates. Lightweight EventSource client receiving live
 messages via HTML5 Server-Sent Events (SSE). Fast stream processing built on top
 of [ReactPHP](https://reactphp.org/)'s event-driven architecture.
 
-> Note: This project is in early alpha stage! Feel free to report any issues you encounter.
-
 **Table of contents**
 
+* [Support us](#support-us)
 * [Quickstart example](#quickstart-example)
 * [Usage](#usage)
     * [EventSource](#eventsource)
@@ -29,6 +28,16 @@ of [ReactPHP](https://reactphp.org/)'s event-driven architecture.
 * [License](#license)
 * [More](#more)
 
+## Support us
+
+We invest a lot of time developing, maintaining and updating our awesome
+open-source projects. You can help us sustain this high-quality of our work by
+[becoming a sponsor on GitHub](https://github.com/sponsors/clue). Sponsors get
+numerous benefits in return, see our [sponsoring page](https://github.com/sponsors/clue)
+for details.
+
+Let's take these projects to the next level together! 🚀
+
 ## Quickstart example
 
 Once [installed](#install), you can use the following code to stream messages
@@ -43,7 +52,7 @@ data: {"name":"Carol","message":"Nice to see you Alice!"}
 
 data: {"name":"Alice","message":"What a lovely chat!"}
 
-data: {"name":"Bob","message":"Yeah, all powered by ReactPHP, such an awesome piece of technology :)"}
+data: {"name":"Bob","message":"All powered by ReactPHP, such an awesome piece of technology :)"}
 ```
 
 ```php
@@ -305,12 +314,14 @@ the `$type` property will default to `message`.
 The recommended way to install this library is [through Composer](https://getcomposer.org/).
 [New to Composer?](https://getcomposer.org/doc/00-intro.md)
 
-Once released, this project will follow [SemVer](https://semver.org/).
-At the moment, this will install the latest development version:
+This project follows [SemVer](https://semver.org/).
+This will install the latest supported version:
 
 ```bash
-$ composer require clue/reactphp-eventsource:^1@dev
+$ composer require clue/reactphp-eventsource:^1
 ```
+
+See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
 
 This project aims to run on any platform and thus does not require any PHP
 extensions and supports running on legacy PHP 5.4 through current PHP 8+.
