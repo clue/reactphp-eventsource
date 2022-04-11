@@ -6,17 +6,22 @@ class MessageEvent
 {
     /**
      * @param string $data
+     * @param string $lastEventId
      * @return self
      * @internal
      */
-    public static function parse($data)
+    public static function parse($data, $lastEventId)
     {
-        $message = new self();
-
         $lines = preg_split(
             '/\r\n|\r(?!\n)|\n/S',
             $data
         );
+
+        $data = '';
+        $id = $lastEventId;
+        $type = 'message';
+        $retry = null;
+
         foreach ($lines as $line) {
             $name = strstr($line, ':', true);
             $value = substr(strstr($line, ':'), 1);
@@ -24,21 +29,36 @@ class MessageEvent
                 $value = substr($value, 1);
             }
             if ($name === 'data') {
-                $message->data .= $value . "\n";
+                $data .= $value . "\n";
             } elseif ($name === 'id') {
-                $message->lastEventId .= $value;
+                $id = $value;
             } elseif ($name === 'event') {
-                $message->type = $value;
+                $type = $value;
             } elseif ($name === 'retry' && $value === (string)(int)$value && $value >= 0) {
-                $message->retry = (int)$value;
+                $retry = (int)$value;
             }
         }
 
-        if (substr($message->data, -1) === "\n") {
-            $message->data = substr($message->data, 0, -1);
+        if (substr($data, -1) === "\n") {
+            $data = substr($data, 0, -1);
         }
 
-        return $message;
+        return new self($data, $id, $type, $retry);
+    }
+
+    /**
+     * @internal
+     * @param string $data
+     * @param string $lastEventId
+     * @param string $type
+     * @param ?int   $retry
+     */
+    private function __construct($data, $lastEventId, $type, $retry)
+    {
+        $this->data = $data;
+        $this->lastEventId = $lastEventId;
+        $this->type = $type;
+        $this->retry = $retry;
     }
 
     /**
@@ -48,10 +68,10 @@ class MessageEvent
     public $data = '';
 
     /**
-     * @var ?string
+     * @var string
      * @readonly
      */
-    public $lastEventId = null;
+    public $lastEventId = '';
 
     /**
      * @var string

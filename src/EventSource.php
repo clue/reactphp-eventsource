@@ -211,12 +211,8 @@ class EventSource extends EventEmitter
                 $buffer = array_pop($messageEvents);
 
                 foreach ($messageEvents as $data) {
-                    $message = MessageEvent::parse($data);
-                    if ($message->lastEventId === null) {
-                        $message->lastEventId = $this->lastEventId;
-                    } else {
-                        $this->lastEventId = $message->lastEventId;
-                    }
+                    $message = MessageEvent::parse($data, $this->lastEventId);
+                    $this->lastEventId = $message->lastEventId;
 
                     if ($message->retry !== null) {
                         $this->reconnectTime = $message->retry / 1000;
