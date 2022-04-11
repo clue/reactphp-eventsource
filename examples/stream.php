@@ -9,7 +9,7 @@ if (!isset($argv[1]) || isset($argv[2])) {
 $es = new Clue\React\EventSource\EventSource($argv[1]);
 
 $es->on('message', function (Clue\React\EventSource\MessageEvent $message) {
-    //$data = json_decode($message->data);
+    // $json = json_decode($message->data);
     var_dump($message);
 });
 
