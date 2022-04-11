@@ -79,13 +79,14 @@ given event loop instance.
 
 ## Install
 
-The recommended way to install this library is [through Composer](https://getcomposer.org).
+The recommended way to install this library is [through Composer](https://getcomposer.org/).
 [New to Composer?](https://getcomposer.org/doc/00-intro.md)
 
-This will install the latest supported version:
+Once released, this project will follow [SemVer](https://semver.org/).
+At the moment, this will install the latest development version:
 
 ```bash
-$ composer require clue/reactphp-eventsource:dev-master
+$ composer require clue/reactphp-eventsource:^1@dev
 ```
 
 This project aims to run on any platform and thus does not require any PHP
@@ -95,7 +96,7 @@ It's *highly recommended to use the latest supported PHP version* for this proje
 ## Tests
 
 To run the test suite, you first need to clone this repo and then install all
-dependencies [through Composer](https://getcomposer.org):
+dependencies [through Composer](https://getcomposer.org/):
 
 ```bash
 $ composer install
