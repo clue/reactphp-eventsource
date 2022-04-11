@@ -544,7 +544,11 @@ class EventSourceTest extends TestCase
 
         $this->assertInstanceOf('Clue\React\EventSource\MessageEvent', $message);
         $this->assertEquals('1', $message->lastEventId);
-        $this->assertEquals('1', $es->lastEventId);
+
+        $ref = new \ReflectionProperty($es, 'lastEventId');
+        $ref->setAccessible(true);
+
+        $this->assertEquals('1', $ref->getValue($es));
     }
 
     public function testReconnectAfterStreamClosesUsesLastEventIdFromParsedEventStreamForNextRequest()
