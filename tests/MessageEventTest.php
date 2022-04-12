@@ -88,6 +88,38 @@ class MessageEventTest extends TestCase
         $this->assertEquals('2', $message->lastEventId);
     }
 
+    public function testParseReturnsMessageWithTypeFromStream()
+    {
+        $message = MessageEvent::parse("data: hello\r\nevent: join", '');
+
+        $this->assertEquals("hello", $message->data);
+        $this->assertEquals('join', $message->type);
+    }
+
+    public function testParseWithoutEventReturnsMessageWithDefaultMessageType()
+    {
+        $message = MessageEvent::parse("data: hello", '');
+
+        $this->assertEquals("hello", $message->data);
+        $this->assertEquals('message', $message->type);
+    }
+
+    public function testParseWithMultipleEventsReturnsMessageWithLastTypeFromStream()
+    {
+        $message = MessageEvent::parse("data: hello\nevent: join\nevent: leave", '');
+
+        $this->assertEquals("hello", $message->data);
+        $this->assertEquals('leave', $message->type);
+    }
+
+    public function testParseWithEmptyEventReturnsMessageWithDefaultMessageType()
+    {
+        $message = MessageEvent::parse("data: hello\r\nevent:", '');
+
+        $this->assertEquals("hello", $message->data);
+        $this->assertEquals('message', $message->type);
+    }
+
     public function retryTimeDataProvider()
     {
         return [
