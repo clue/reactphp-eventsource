@@ -24,15 +24,15 @@ class MessageEvent
 
         foreach ($lines as $line) {
             $name = strstr($line, ':', true);
-            $value = substr(strstr($line, ':'), 1);
+            $value = (string) substr(strstr($line, ':'), 1);
             if (isset($value[0]) && $value[0] === ' ') {
-                $value = substr($value, 1);
+                $value = (string) substr($value, 1);
             }
             if ($name === 'data') {
                 $data .= $value . "\n";
             } elseif ($name === 'id') {
                 $id = $value;
-            } elseif ($name === 'event') {
+            } elseif ($name === 'event' && $value !== '') {
                 $type = $value;
             } elseif ($name === 'retry' && $value === (string)(int)$value && $value >= 0) {
                 $retry = (int)$value;
