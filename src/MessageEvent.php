@@ -7,10 +7,11 @@ class MessageEvent
     /**
      * @param string $data
      * @param string $lastEventId
+     * @param float  $retryTime   passed by reference, will be updated with `retry` field in seconds if valid
      * @return self
      * @internal
      */
-    public static function parse($data, $lastEventId)
+    public static function parse($data, $lastEventId, &$retryTime = 0.0)
     {
         $lines = preg_split(
             '/\r\n|\r(?!\n)|\n/S',
@@ -20,7 +21,6 @@ class MessageEvent
         $data = '';
         $id = $lastEventId;
         $type = 'message';
-        $retry = null;
 
         foreach ($lines as $line) {
             $name = strstr($line, ':', true);
@@ -35,7 +35,7 @@ class MessageEvent
             } elseif ($name === 'event' && $value !== '') {
                 $type = $value;
             } elseif ($name === 'retry' && $value === (string)(int)$value && $value >= 0) {
-                $retry = (int)$value;
+                $retryTime = $value * 0.001;
             }
         }
 
@@ -43,7 +43,7 @@ class MessageEvent
             $data = substr($data, 0, -1);
         }
 
-        return new self($data, $id, $type, $retry);
+        return new self($data, $id, $type);
     }
 
     /**
@@ -51,14 +51,12 @@ class MessageEvent
      * @param string $data
      * @param string $lastEventId
      * @param string $type
-     * @param ?int   $retry
      */
-    private function __construct($data, $lastEventId, $type, $retry)
+    private function __construct($data, $lastEventId, $type)
     {
         $this->data = $data;
         $this->lastEventId = $lastEventId;
         $this->type = $type;
-        $this->retry = $retry;
     }
 
     /**
@@ -78,11 +76,4 @@ class MessageEvent
      * @readonly
      */
     public $type = 'message';
-
-    /**
-     * @internal
-     * @var ?int
-     * @readonly
-     */
-    public $retry;
 }
