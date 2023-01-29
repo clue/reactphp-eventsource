@@ -7,10 +7,11 @@ on:
 jobs:
   PHPUnit:
     name: PHPUnit (PHP ${{ matrix.php }})
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         php:
+          - 8.2
           - 8.1
           - 8.0
           - 7.4
@@ -22,7 +23,7 @@ jobs:
           - 5.5
           - 5.4
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -30,7 +31,7 @@ jobs:
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text --coverage-clover=clover.xml
         if: ${{ matrix.php >= 7.3 }}
-      - run: vendor/bin/phpunit --coverage-text -c phpunit.xml.legacy --coverage-clover=clover.xml
+      - run: vendor/bin/phpunit --coverage-text --coverage-clover=clover.xml -c phpunit.xml.legacy
         if: ${{ matrix.php < 7.3 }}
       - name: Check 100% code coverage
         shell: php {0}
