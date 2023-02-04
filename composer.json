@@ -17,12 +17,16 @@
         "react/http": "^1.6"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5 || ^5.7 || ^4.8.35"
+        "phpunit/phpunit": "^9.6 || ^5.7 || ^4.8.35"
     },
     "autoload": {
-        "psr-4": { "Clue\\React\\EventSource\\": "src/" }
+        "psr-4": {
+            "Clue\\React\\EventSource\\": "src/"
+        }
     },
     "autoload-dev": {
-        "psr-4": { "Clue\\Tests\\React\\EventSource\\": "tests/" }
+        "psr-4": {
+            "Clue\\Tests\\React\\EventSource\\": "tests/"
+        }
     }
 }
