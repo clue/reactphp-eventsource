@@ -29,11 +29,11 @@ class MessageEvent
                 $value = (string) substr($value, 1);
             }
             if ($name === 'data') {
-                $data .= $value . "\n";
-            } elseif ($name === 'id') {
-                $id = $value;
+                $data .= self::utf8($value) . "\n";
+            } elseif ($name === 'id' && \strpos($value, "\x00") === false) {
+                $id = self::utf8($value);
             } elseif ($name === 'event' && $value !== '') {
-                $type = $value;
+                $type = self::utf8($value);
             } elseif ($name === 'retry' && $value === (string)(int)$value && $value >= 0) {
                 $retryTime = $value * 0.001;
             }
@@ -44,6 +44,12 @@ class MessageEvent
         }
 
         return new self($data, $id, $type);
+    }
+
+    /** @return string */
+    private static function utf8($string)
+    {
+        return \htmlspecialchars_decode(\htmlspecialchars($string, \ENT_NOQUOTES | \ENT_SUBSTITUTE, 'utf-8'));
     }
 
     /**

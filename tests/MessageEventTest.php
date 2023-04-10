@@ -56,6 +56,13 @@ class MessageEventTest extends TestCase
         $this->assertEquals("hello\n", $message->data);
     }
 
+    public function testParseDataWithNonUtf8AndNullBytesReturnsDataWithUnicodeReplacement()
+    {
+        $message = MessageEvent::parse("data: h\x00ll\xFF!", '');
+
+        $this->assertEquals("h\x00ll�!", $message->data);
+    }
+
     public function testParseReturnsMessageWithIdFromStream()
     {
         $message = MessageEvent::parse("data: hello\r\nid: 1", '');
@@ -88,6 +95,22 @@ class MessageEventTest extends TestCase
         $this->assertEquals('2', $message->lastEventId);
     }
 
+    public function testParseWithIdWithNonUtf8BytesReturnsMessageWithLastEventIdFromStreamWithUnicodeReplacement()
+    {
+        $message = MessageEvent::parse("data: hello\nid: h\xFFllo!", '');
+
+        $this->assertEquals("hello", $message->data);
+        $this->assertEquals("h�llo!", $message->lastEventId);
+    }
+
+    public function testParseWithIdWithNullByteReturnsMessageWithLastEventIdFromLastEventId()
+    {
+        $message = MessageEvent::parse("data: hello\nid: h\x00llo!", '1');
+
+        $this->assertEquals("hello", $message->data);
+        $this->assertEquals('1', $message->lastEventId);
+    }
+
     public function testParseReturnsMessageWithTypeFromStream()
     {
         $message = MessageEvent::parse("data: hello\r\nevent: join", '');
@@ -118,6 +141,14 @@ class MessageEventTest extends TestCase
 
         $this->assertEquals("hello", $message->data);
         $this->assertEquals('message', $message->type);
+    }
+
+    public function testParseWithEventTypeWithNonUtf8AndNullBytesReturnsTypeWithUnicodeReplacement()
+    {
+        $message = MessageEvent::parse("data: hello\nevent: h\x00ll\xFF!", '');
+
+        $this->assertEquals("hello", $message->data);
+        $this->assertEquals("h\x00ll�!", $message->type);
     }
 
     public function retryTimeDataProvider()
