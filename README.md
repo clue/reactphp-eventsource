@@ -20,6 +20,7 @@ of [ReactPHP](https://reactphp.org/)'s event-driven architecture.
         * [EventSource::$url](#eventsourceurl)
         * [close()](#close)
     * [MessageEvent](#messageevent)
+        * [MessageEvent::__construct()](#messageevent__construct)
         * [MessageEvent::$data](#messageeventdata)
         * [MessageEvent::$lastEventId](#messageeventlasteventid)
         * [MessageEvent::$type](#messageeventtype)
@@ -239,6 +240,19 @@ This will close any active connections or connection attempts and go into the
 ### MessageEvent
 
 The `MessageEvent` class represents an incoming EventSource message.
+
+#### MessageEvent::__construct()
+
+The `new MessageEvent(string $data, string $lastEventId = '', string $type = 'message')` constructor can be used to
+create a new `MessageEvent` instance.
+
+This is mostly used internally to represent each incoming message event
+(see also [`message` event](#message-event)). Likewise, you can also use
+this class in test cases to test how your application reacts to incoming
+messages.
+
+The constructor validates and initializes all properties of this class.
+It throws an `InvalidArgumentException` if any parameters are invalid.
 
 #### MessageEvent::$data
 

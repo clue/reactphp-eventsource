@@ -175,4 +175,109 @@ class MessageEventTest extends TestCase
 
         $this->assertSame($expected, $retryTime);
     }
+
+    public function testConstructWithDefaultLastEventIdAndType()
+    {
+        $message = new MessageEvent('hello');
+
+        $this->assertEquals('hello', $message->data);
+        $this->assertEquals('', $message->lastEventId);
+        $this->assertEquals('message', $message->type);
+    }
+
+    public function testConstructWithEmptyDataAndId()
+    {
+        $message = new MessageEvent('', '');
+
+        $this->assertEquals('', $message->data);
+        $this->assertEquals('', $message->lastEventId);
+        $this->assertEquals('message', $message->type);
+    }
+
+    public function testConstructWithNullBytesInDataAndType()
+    {
+        $message = new MessageEvent("h\x00llo!", '', "h\x00llo!");
+
+        $this->assertEquals("h\x00llo!", $message->data);
+        $this->assertEquals('', $message->lastEventId);
+        $this->assertEquals("h\x00llo!", $message->type);
+    }
+
+    public function testConstructWithCarriageReturnAndLineFeedsInDataReplacedWithSimpleLineFeeds()
+    {
+        $message = new MessageEvent("hello\rworld!\r\n");
+
+        $this->assertEquals("hello\nworld!\n", $message->data);
+    }
+
+    public function testConstructWithInvalidDataUtf8Throws()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $data given, must be valid UTF-8 string');
+        new MessageEvent("h\xFFllo!");
+    }
+
+    public function testConstructWithInvalidLastEventIdUtf8Throws()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $lastEventId given, must be valid UTF-8 string with no null bytes or newline characters');
+        new MessageEvent('hello', "h\xFFllo");
+    }
+
+    public function testConstructWithInvalidLastEventIdNullThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $lastEventId given, must be valid UTF-8 string with no null bytes or newline characters');
+        new MessageEvent('hello', "h\x00llo");
+    }
+
+    public function testConstructWithInvalidLastEventIdCarriageReturnThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $lastEventId given, must be valid UTF-8 string with no null bytes or newline characters');
+        new MessageEvent('hello', "hello\r");
+    }
+
+    public function testConstructWithInvalidLastEventIdLineFeedThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $lastEventId given, must be valid UTF-8 string with no null bytes or newline characters');
+        new MessageEvent('hello', "hello\n");
+    }
+
+    public function testConstructWithInvalidTypeUtf8Throws()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $type given, must be valid UTF-8 string with no newline characters');
+        new MessageEvent('hello', '', "h\xFFllo");
+    }
+
+    public function testConstructWithInvalidTypeEmptyThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $type given, must be valid UTF-8 string with no newline characters');
+        new MessageEvent('hello', '', '');
+    }
+
+    public function testConstructWithInvalidTypeCarriageReturnThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $type given, must be valid UTF-8 string with no newline characters');
+        new MessageEvent('hello', '', "hello\r");
+    }
+
+    public function testConstructWithInvalidTypeLineFeedThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid $type given, must be valid UTF-8 string with no newline characters');
+        new MessageEvent('hello', '', "hello\r");
+    }
+
+    public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
+    {
+        if (method_exists($this, 'expectException')) {
+            // PHPUnit 5.2+
+            $this->expectException($exception);
+            if ($exceptionMessage !== '') {
+                $this->expectExceptionMessage($exceptionMessage);
+            }
+            if ($exceptionCode !== null) {
+                $this->expectExceptionCode($exceptionCode);
+            }
+        } else {
+            // legacy PHPUnit < 5.2
+            parent::setExpectedException($exception, $exceptionMessage, $exceptionCode);
+        }
+    }
 }
