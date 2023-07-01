@@ -270,6 +270,8 @@ class EventSource extends EventEmitter
 
             $request->then(function (ResponseInterface $response) {
                 $response->getBody()->close();
+            }, function () {
+                // ignore to avoid reporting unhandled rejection
             });
             $request->cancel();
         }
