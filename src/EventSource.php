@@ -191,7 +191,7 @@ class EventSource extends EventEmitter
                 return;
             }
 
-            // match `Content-Type: text/event-stream` (case insensitve and ignore additional parameters)
+            // match `Content-Type: text/event-stream` (case insensitive and ignore additional parameters)
             if (!preg_match('/^text\/event-stream(?:$|;)/i', $response->getHeaderLine('Content-Type'))) {
                 $this->readyState = self::CLOSED;
                 $this->emit('error', array(new \UnexpectedValueException('Unexpected Content-Type')));

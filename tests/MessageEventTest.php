@@ -21,14 +21,14 @@ class MessageEventTest extends TestCase
         $this->assertEquals("hello\nworld", $message->data);
     }
 
-    public function testParseDataOverTwoLinesWithCarrigeReturnsWillBeCombinedWithNewline()
+    public function testParseDataOverTwoLinesWithCarriageReturnsWillBeCombinedWithNewline()
     {
         $message = MessageEvent::parse("data: hello\rdata: world", '');
 
         $this->assertEquals("hello\nworld", $message->data);
     }
 
-    public function testParseDataOverTwoLinesWithCarrigeReturnsAndNewlinesWillBeCombinedWithNewline()
+    public function testParseDataOverTwoLinesWithCarriageReturnsAndNewlinesWillBeCombinedWithNewline()
     {
         $message = MessageEvent::parse("data: hello\r\ndata: world", '');
 
@@ -42,14 +42,14 @@ class MessageEventTest extends TestCase
         $this->assertEquals("hello\n", $message->data);
     }
 
-    public function testParseDataWithCarrigeReturnOverTwoLines()
+    public function testParseDataWithCarriageReturnOverTwoLines()
     {
         $message = MessageEvent::parse("data: hello\rdata:", '');
 
         $this->assertEquals("hello\n", $message->data);
     }
 
-    public function testParseDataWithCarrigeReturnAndNewlineOverTwoLines()
+    public function testParseDataWithCarriageReturnAndNewlineOverTwoLines()
     {
         $message = MessageEvent::parse("data: hello\r\ndata:", '');
 
