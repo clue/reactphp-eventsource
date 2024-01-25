@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 (2024-01-25)
+
+*   Feature / Fix: Forward compatibility with Promise v3.
+    (#42 by @clue)
+
+*   Feature: Full PHP 8.3 compatibility.
+    (#44 by @yadaiio)
+
+*   Minor documentation improvements.
+    (#43 by @yadaiio)
+
 ## 1.1.0 (2023-04-11)
 
 *   Feature: Public `MessageEvent` constructor and refactor property assignments.
