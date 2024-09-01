@@ -30,6 +30,18 @@ class EventSourceTest extends TestCase
         new EventSource('ftp://example.com');
     }
 
+    public function testCtorThrowsForInvalidBrowser()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Argument #2 ($browser) expected null|React\Http\Browser');
+        new EventSource('http://example.com', 'browser');
+    }
+
+    public function testCtorThrowsForInvalidLoop()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Argument #3 ($loop) expected null|React\EventLoop\LoopInterface');
+        new EventSource('http://example.com', null, 'loop');
+    }
+
     public function testConstructWithoutBrowserAndLoopAssignsBrowserAndLoopAutomatically()
     {
         $es = new EventSource('http://example.com');
