@@ -150,11 +150,18 @@ class EventSource extends EventEmitter
      * @param ?LoopInterface $loop
      * @throws \InvalidArgumentException for invalid URL
      */
-    public function __construct($url, Browser $browser = null, LoopInterface $loop = null)
+    public function __construct($url, $browser = null, $loop = null)
     {
         $parts = parse_url($url);
         if (!isset($parts['scheme'], $parts['host']) || !in_array($parts['scheme'], array('http', 'https'))) {
             throw new \InvalidArgumentException();
+        }
+
+        if ($browser !== null && !$browser instanceof Browser) { // manual type check to support legacy PHP < 7.1
+            throw new \InvalidArgumentException('Argument #2 ($browser) expected null|React\Http\Browser');
+        }
+        if ($loop !== null && !$loop instanceof LoopInterface) { // manual type check to support legacy PHP < 7.1
+            throw new \InvalidArgumentException('Argument #3 ($loop) expected null|React\EventLoop\LoopInterface');
         }
 
         $this->loop = $loop ?: Loop::get();
