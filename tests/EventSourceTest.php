@@ -4,7 +4,6 @@ namespace Clue\Tests\React\EventSource;
 
 use Clue\React\EventSource\EventSource;
 use PHPUnit\Framework\TestCase;
-use React\Http\Io\ReadableBodyStream;
 use React\Http\Message\Response;
 use React\Promise\Deferred;
 use React\Promise\Promise;
@@ -286,7 +285,7 @@ class EventSourceTest extends TestCase
         });
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $this->assertEquals(EventSource::OPEN, $readyState);
@@ -307,7 +306,7 @@ class EventSourceTest extends TestCase
         });
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('CONTENT-type' => 'TEXT/Event-Stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('CONTENT-type' => 'TEXT/Event-Stream'), $stream);
         $deferred->resolve($response);
 
         $this->assertEquals(EventSource::OPEN, $readyState);
@@ -328,7 +327,7 @@ class EventSourceTest extends TestCase
         });
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream;charset=utf-8;foo=bar'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream;charset=utf-8;foo=bar'), $stream);
         $deferred->resolve($response);
 
         $this->assertEquals(EventSource::OPEN, $readyState);
@@ -350,7 +349,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser, $loop);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $error = null;
@@ -378,7 +377,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser, $loop);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $es->on('error', function ($e) use ($es) {
@@ -404,7 +403,7 @@ class EventSourceTest extends TestCase
         });
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $this->assertEquals(EventSource::CLOSED, $es->readyState);
@@ -421,7 +420,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $message = null;
@@ -446,7 +445,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $message = null;
@@ -471,7 +470,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $message = null;
@@ -495,7 +494,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $message = null;
@@ -518,7 +517,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $message = null;
@@ -543,7 +542,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $message = null;
@@ -589,7 +588,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser, $loop);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $stream->write("id:123\n\n");
@@ -625,7 +624,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser, $loop);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $stream->write("retry:2543\n\n");
@@ -661,7 +660,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser, $loop);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $stream->write("retry:now\n\n");
@@ -698,7 +697,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $messages = [];
@@ -726,7 +725,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $messages = [];
@@ -754,7 +753,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $messages = [];
@@ -783,7 +782,7 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com', $browser);
 
         $stream = new ThroughStream();
-        $response = new Response(200, array('Content-Type' => 'text/event-stream'), new ReadableBodyStream($stream));
+        $response = new Response(200, array('Content-Type' => 'text/event-stream'), $stream);
         $deferred->resolve($response);
 
         $messages = [];
