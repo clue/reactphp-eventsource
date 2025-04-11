@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0 (2025-04-11)
+
+Today’s release is extra special because it’s also my birthday! 🎉
+A huge thank you to all sponsors for your continued support, it means so much.
+If you’re thinking about sponsoring, now’s a great time to [join the fun](https://github.com/sponsors/clue)! ❤️
+
+*   Feature: Improve PHP 8.4+ support by avoiding implicitly nullable types.
+    (#46 and #47 by @clue)
+
+*   Improve test suite, update to reactphp/http `v1.10.0` and avoid using internal classes.
+    (#45 by @SimonFrings and #48 by @clue)
+
 ## 1.2.0 (2024-01-25)
 
 *   Feature / Fix: Forward compatibility with Promise v3.
