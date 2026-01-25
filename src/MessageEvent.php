@@ -34,7 +34,7 @@ class MessageEvent
                 $id = self::utf8($value);
             } elseif ($name === 'event' && $value !== '') {
                 $type = self::utf8($value);
-            } elseif ($name === 'retry' && $value === (string)(int)$value && $value >= 0) {
+            } elseif ($name === 'retry' && $value >= 0 && $value <= \PHP_INT_MAX && $value === (string) (int) $value) {
                 $retryTime = $value * 0.001;
             }
         }

@@ -46,13 +46,17 @@ class EventSourceTest extends TestCase
         $es = new EventSource('http://example.com');
 
         $ref = new \ReflectionProperty($es, 'browser');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $browser = $ref->getValue($es);
 
         $this->assertInstanceOf('React\Http\Browser', $browser);
 
         $ref = new \ReflectionProperty($es, 'loop');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($es);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
@@ -557,7 +561,9 @@ class EventSourceTest extends TestCase
         $this->assertEquals('1', $message->lastEventId);
 
         $ref = new \ReflectionProperty($es, 'lastEventId');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
 
         $this->assertEquals('1', $ref->getValue($es));
     }
