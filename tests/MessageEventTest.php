@@ -160,7 +160,9 @@ class MessageEventTest extends TestCase
             ['retry: ' . PHP_INT_MAX . '9', null],
             ['retry: 1.234', null],
             ['retry: now', null],
+            ['retry: 0.0', null],
             ['retry: -1', null],
+            ['retry: +1', null],
             ['retry: -1.234', null]
         ];
     }
