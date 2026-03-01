@@ -7,6 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Http\Browser;
+use React\Http\Message\ResponseException;
 use React\Stream\ReadableStreamInterface;
 
 /**
@@ -193,7 +194,8 @@ class EventSource extends EventEmitter
         $this->request->then(function (ResponseInterface $response) {
             if ($response->getStatusCode() !== 200) {
                 $this->readyState = self::CLOSED;
-                $this->emit('error', [new \UnexpectedValueException(
+                $this->emit('error', [new ResponseException(
+                    $response,
                     'Expected "200 OK" response status, ' . $this->quote($response->getStatusCode() . ' ' . $response->getReasonPhrase()) . ' response status returned'
                 )]);
                 $this->close();
@@ -204,7 +206,8 @@ class EventSource extends EventEmitter
             $contentType = $response->getHeaderLine('Content-Type');
             if (!preg_match('/^text\/event-stream(?:$|;)/i', $contentType)) {
                 $this->readyState = self::CLOSED;
-                $this->emit('error', [new \UnexpectedValueException(
+                $this->emit('error', [new ResponseException(
+                    $response,
                     'Expected "Content-Type: text/event-stream" response header, ' . (!$response->hasHeader('Content-Type') ? 'no "Content-Type"' : $this->quote('Content-Type: ' . $contentType)) . ' response header returned'
                 )]);
                 $this->close();

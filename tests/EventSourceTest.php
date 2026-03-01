@@ -268,8 +268,10 @@ class EventSourceTest extends TestCase
         $deferred->resolve($response);
 
         $this->assertEquals(EventSource::CLOSED, $readyState);
-        $this->assertInstanceOf('UnexpectedValueException', $caught);
+        $this->assertInstanceOf('React\Http\Message\ResponseException', $caught);
         $this->assertEquals($expectedMessage, $caught->getMessage());
+        $this->assertEquals($response->getStatusCode(), $caught->getCode());
+        $this->assertSame($response, $caught->getResponse());
     }
 
     public function provideInvalidContentType()
@@ -320,8 +322,9 @@ class EventSourceTest extends TestCase
         $deferred->resolve($response);
 
         $this->assertEquals(EventSource::CLOSED, $readyState);
-        $this->assertInstanceOf('UnexpectedValueException', $caught);
+        $this->assertInstanceOf('React\Http\Message\ResponseException', $caught);
         $this->assertEquals($expectedMessage, $caught->getMessage());
+        $this->assertSame($response, $caught->getResponse());
     }
 
     public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponse()
