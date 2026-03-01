@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0 (2026-03-01)
+
+*   Feature: Improve error reporting for invalid responses by using `ResponseException`.
+    (#51 by @clue)
+
+*   Feature: Improve PHP 8.5+ support and update test environment.
+    (#50 by @clue)
+
+*   Improve test suite to support legacy PHP 7.2 with PHPUnit 8.5.
+    (#49 by @clue)
+
 ## 1.3.0 (2025-04-11)
 
 Today’s release is extra special because it’s also my birthday! 🎉
