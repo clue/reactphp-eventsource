@@ -193,7 +193,7 @@ The `error` event will be emitted when the EventSource connection fails.
 The event receives a single `Exception` argument for the error instance.
 
 ```php
-$redis->on('error', function (Exception $e) {
+$es->on('error', function (Exception $e) {
     echo 'Error: ' . $e->getMessage() . PHP_EOL;
 });
 ```
@@ -201,6 +201,9 @@ $redis->on('error', function (Exception $e) {
 The EventSource connection will be retried automatically when it is temporarily
 disconnected. If the server sends a non-successful HTTP status code or an
 invalid `Content-Type` response header, the connection will fail permanently.
+In this case, the `error` event will receive a
+[`ResponseException`](https://github.com/reactphp/http#responseexception)
+that provides access to the response via the `getResponse()` method.
 
 ```php
 $es->on('error', function (Exception $e) use ($es) {

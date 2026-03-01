@@ -228,30 +228,28 @@ class EventSourceTest extends TestCase
         $es->close();
     }
 
-    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidStatusCode()
+    public function provideInvalidStatusCode()
     {
-        $deferred = new Deferred();
-        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
-        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
-        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
-
-        $es = new EventSource('http://example.com', $browser);
-
-        $readyState = null;
-        $caught = null;
-        $es->on('error', function ($e) use ($es, &$readyState, &$caught) {
-            $readyState = $es->readyState;
-            $caught = $e;
-        });
-
-        $response = new Response(400, array('Content-Type' => 'text/event-stream'), '');
-        $deferred->resolve($response);
-
-        $this->assertEquals(EventSource::CLOSED, $readyState);
-        $this->assertInstanceOf('UnexpectedValueException', $caught);
+        return [
+            [
+                new Response(400, ['Content-Type' => 'text/event-stream'], ''),
+                'Expected "200 OK" response status, "400 Bad Request" response status returned'
+            ],
+            [
+                new Response(500, ['Content-Type' => 'text/event-stream'], '', '1.1', "Intern\xE4l Server Err\xF6r"),
+                'Expected "200 OK" response status, "500 Intern\344l Server Err\366r" response status returned'
+            ],
+            [
+                new Response(400, ['Content-Type' => 'text/event-stream'], '', '1.1', str_repeat('a', 200)),
+                'Expected "200 OK" response status, "400 ' . str_repeat('a', 96) . '" response status returned'
+            ]
+        ];
     }
 
-    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidContentType()
+    /**
+     * @dataProvider provideInvalidStatusCode
+     */
+    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidStatusCode($response, $expectedMessage)
     {
         $deferred = new Deferred();
         $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
@@ -267,11 +265,66 @@ class EventSourceTest extends TestCase
             $caught = $e;
         });
 
-        $response = new Response(200, array(), '');
         $deferred->resolve($response);
 
         $this->assertEquals(EventSource::CLOSED, $readyState);
-        $this->assertInstanceOf('UnexpectedValueException', $caught);
+        $this->assertInstanceOf('React\Http\Message\ResponseException', $caught);
+        $this->assertEquals($expectedMessage, $caught->getMessage());
+        $this->assertEquals($response->getStatusCode(), $caught->getCode());
+        $this->assertSame($response, $caught->getResponse());
+    }
+
+    public function provideInvalidContentType()
+    {
+        return [
+            [
+                new Response(200, [], ''),
+                'Expected "Content-Type: text/event-stream" response header, no "Content-Type" response header returned'
+            ],
+            [
+                new Response(200, ['Content-Type' => ''], ''),
+                'Expected "Content-Type: text/event-stream" response header, "Content-Type: " response header returned'
+            ],
+            [
+                new Response(200, ['Content-Type' => 'text/html'], ''),
+                'Expected "Content-Type: text/event-stream" response header, "Content-Type: text/html" response header returned'
+            ],
+            [
+                new Response(200, ['Content-Type' => "application/json; invalid=a\xE4b"], ''),
+                'Expected "Content-Type: text/event-stream" response header, "Content-Type: application/json; invalid=a\344b" response header returned'
+            ],
+            [
+                new Response(200, ['Content-Type' => str_repeat('a', 200)], ''),
+                'Expected "Content-Type: text/event-stream" response header, "Content-Type: ' . str_repeat('a', 86) . '" response header returned'
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider provideInvalidContentType
+     */
+    public function testConstructorWillReportFatalErrorWhenGetResponseResolvesWithInvalidContentType($response, $expectedMessage)
+    {
+        $deferred = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->once())->method('requestStreaming')->willReturn($deferred->promise());
+
+        $es = new EventSource('http://example.com', $browser);
+
+        $readyState = null;
+        $caught = null;
+        $es->on('error', function ($e) use ($es, &$readyState, &$caught) {
+            $readyState = $es->readyState;
+            $caught = $e;
+        });
+
+        $deferred->resolve($response);
+
+        $this->assertEquals(EventSource::CLOSED, $readyState);
+        $this->assertInstanceOf('React\Http\Message\ResponseException', $caught);
+        $this->assertEquals($expectedMessage, $caught->getMessage());
+        $this->assertSame($response, $caught->getResponse());
     }
 
     public function testConstructorWillReportOpenWhenGetResponseResolvesWithValidResponse()
