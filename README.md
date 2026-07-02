@@ -25,6 +25,7 @@ of [ReactPHP](https://reactphp.org/)'s event-driven architecture.
         * [MessageEvent::$data](#messageeventdata)
         * [MessageEvent::$lastEventId](#messageeventlasteventid)
         * [MessageEvent::$type](#messageeventtype)
+    * [SseDecoder](#ssedecoder)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -324,6 +325,146 @@ See also [`message` event](#message-event).
 
 If the message does not contain a `event` field or the `event` field is empty,
 the `$type` property will default to `message`.
+
+### SseDecoder
+
+The `SseDecoder` class is responsible for decoding the Server-Sent Events (SSE)
+wire protocol from any readable byte stream.
+
+Unlike the [`EventSource`](#eventsource) class which implements the higher-level
+HTML5 EventSource API (HTTP `GET` request, automatic reconnection, `readyState`
+and `Last-Event-ID` handling), this class only decodes the `text/event-stream`
+wire protocol. This makes it reusable whenever you already have a readable
+stream of SSE data, such as a streaming HTTP response to a custom request. This
+is common for LLM streaming APIs that return SSE over an HTTP `POST` request:
+
+```php
+$browser = new React\Http\Browser();
+
+$response = await($browser->requestStreaming(
+    'POST',
+    'https://api.example.com/v1/messages',
+    $headers,
+    $body
+));
+assert($response instanceof Psr\Http\Message\ResponseInterface);
+
+$stream = $response->getBody();
+assert($stream instanceof React\Stream\ReadableStreamInterface);
+
+$sse = new Clue\React\EventSource\SseDecoder($stream);
+$sse->on('data', function (Clue\React\EventSource\MessageEvent $message) {
+    $data = json_decode($message->data);
+
+    if ($data?->type === 'content_block_delta') {
+        echo $data->delta->text;
+    }
+});
+```
+
+Its constructor requires a readable stream that emits the raw SSE bytes:
+
+```php
+$sse = new Clue\React\EventSource\SseDecoder($stream);
+```
+
+When resuming a previously interrupted stream, you can pass the last event ID to
+continue from, so any message without an `id` field inherits it:
+
+```php
+$sse = new Clue\React\EventSource\SseDecoder($stream, $lastEventId);
+```
+
+The `SseDecoder` implements ReactPHP's
+[`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+and emits a `data` event with a [`MessageEvent` object](#messageevent) for each
+incoming event. It is commonly used for transporting structured data such as JSON:
+
+```
+data: {"name":"Alice","age":30}
+
+data: {"name":"Bob","age":50}
+```
+```php
+$sse->on('data', function (Clue\React\EventSource\MessageEvent $message) {
+    $data = json_decode($message->data);
+    echo "{$data->name} is {$data->age} years old" . PHP_EOL;
+});
+```
+
+ReactPHP's underlying streams emit chunks of data strings and make no assumption
+about their lengths. These chunks do not necessarily represent complete SSE
+messages, as a single message may be broken up into multiple data chunks.
+This class reassembles these messages by buffering incomplete ones.
+
+Each event is dispatched as soon as its terminating blank line has been read.
+As per the SSE specification, an event with an empty data buffer (such as a
+comment or a lone `retry` field) will not be dispatched, and an incomplete event
+left in the buffer when the input stream ends will be discarded.
+
+The `id` and `retry` fields will be saved in the `string $lastEventId = ''`
+and `?float $lastRetryTime = null` properties respectively. They are
+assigned to the decoder before each `data` event is emitted as they may appear
+on events that are never dispatched. You can read their value from any event:
+
+```php
+$sse->on('close', function () use ($sse) {
+    printf(
+        'Reconnect in %.1f seconds with last event ID %s' . PHP_EOL,
+        $sse->lastRetryTime ?? 3.0,
+        $sse->lastEventId
+    );
+});
+```
+
+If the underlying stream emits an `error` event, it will forward this `error`
+event and then `close` the input stream. As per the SSE specs, any unknown or
+malformed fields will be ignored and will not cause an `error` event:
+
+```php
+$sse->on('error', function (Exception $error) {
+    // an error occurred, stream will close next
+});
+```
+
+If the underlying stream emits an `end` event, it will clear any incomplete
+data from the buffer and emit a final `end` event:
+
+```php
+$sse->on('end', function () {
+    // stream successfully ended, stream will close next
+});
+```
+
+If either the underlying stream or the `SseDecoder` is closed, it will forward
+the `close` event:
+
+```php
+$sse->on('close', function () {
+    // stream closed
+    // possibly after an "end" event or due to an "error" event
+});
+```
+
+The `close(): void` method can be used to explicitly close the `SseDecoder`
+and its underlying stream:
+
+```php
+$sse->close();
+```
+
+The `pipe(WritableStreamInterface $dest, array $options = []): WritableStreamInterface`
+method can be used to forward all data to the given destination stream.
+Please note that the `SseDecoder` emits structured `MessageEvent` objects,
+while many writable streams expect only data chunks:
+
+```php
+$map = new ThroughStream(fn (MessageEvent $message) => $message->data);
+$sse->pipe($map)->pipe($logger);
+```
+
+For more details, see ReactPHP's
+[`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface).
 
 ## Install
 
