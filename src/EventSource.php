@@ -217,29 +217,19 @@ class EventSource extends EventEmitter
             $stream = $response->getBody();
             assert($stream instanceof ReadableStreamInterface);
 
-            $buffer = '';
-            $stream->on('data', function ($chunk) use (&$buffer, $stream) {
-                $messageEvents = preg_split(
-                    '/(?:\r\n|\r(?!\n)|\n){2}/S',
-                    $buffer . $chunk
-                );
-                $buffer = array_pop($messageEvents);
-
-                foreach ($messageEvents as $data) {
-                    $message = MessageEvent::parse($data, $this->lastEventId, $this->reconnectTime);
-                    $this->lastEventId = $message->lastEventId;
-
-                    if ($message->data !== '') {
-                        $this->emit($message->type, array($message));
-                        if ($this->readyState === self::CLOSED) {
-                            break;
-                        }
-                    }
-                }
+            // resume from the last event ID received, it persists across reconnects
+            $sse = new SseDecoder($stream, $this->lastEventId);
+            $sse->on('data', function (MessageEvent $message) {
+                $this->emit($message->type, array($message));
             });
 
-            $stream->on('close', function () use (&$buffer) {
-                $buffer = '';
+            $sse->on('close', function () use ($sse) {
+                // `id` and `retry` may arrive on events that are never dispatched
+                $this->lastEventId = $sse->lastEventId;
+                if ($sse->lastRetryTime !== null) {
+                    $this->reconnectTime = $sse->lastRetryTime;
+                }
+
                 $this->request = null;
                 if ($this->readyState === self::OPEN) {
                     $this->readyState = self::CONNECTING;

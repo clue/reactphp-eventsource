@@ -657,6 +657,143 @@ class EventSourceTest extends TestCase
         $timerReconnect();
     }
 
+    public function testReconnectTwiceAfterSecondStreamWithoutIdStillUsesLastEventIdFromFirstStream()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timerReconnect = null;
+        $loop->expects($this->exactly(2))->method('addTimer')->with(
+            3.0,
+            $this->callback(function ($cb) use (&$timerReconnect) {
+                $timerReconnect = $cb;
+                return true;
+            })
+        );
+
+        $first = new Deferred();
+        $second = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->exactly(3))->method('requestStreaming')->withConsecutive(
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache', 'Last-Event-ID' => '123']],
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache', 'Last-Event-ID' => '123']]
+        )->willReturnOnConsecutiveCalls(
+            $first->promise(),
+            $second->promise(),
+            new Promise(function () { })
+        );
+
+        $es = new EventSource('http://example.com', $browser, $loop);
+
+        $stream = new ThroughStream();
+        $first->resolve(new Response(200, array('Content-Type' => 'text/event-stream'), $stream));
+
+        $stream->write("id:123\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+
+        $stream = new ThroughStream();
+        $second->resolve(new Response(200, array('Content-Type' => 'text/event-stream'), $stream));
+
+        $stream->write("data:hello\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+    }
+
+    public function testReconnectTwiceAfterSecondStreamWithEmptyIdClearsLastEventIdForNextRequest()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timerReconnect = null;
+        $loop->expects($this->exactly(2))->method('addTimer')->with(
+            3.0,
+            $this->callback(function ($cb) use (&$timerReconnect) {
+                $timerReconnect = $cb;
+                return true;
+            })
+        );
+
+        $first = new Deferred();
+        $second = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->exactly(3))->method('requestStreaming')->withConsecutive(
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']],
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache', 'Last-Event-ID' => '123']],
+            ['GET', 'http://example.com', ['Accept' => 'text/event-stream', 'Cache-Control' => 'no-cache']]
+        )->willReturnOnConsecutiveCalls(
+            $first->promise(),
+            $second->promise(),
+            new Promise(function () { })
+        );
+
+        $es = new EventSource('http://example.com', $browser, $loop);
+
+        $stream = new ThroughStream();
+        $first->resolve(new Response(200, array('Content-Type' => 'text/event-stream'), $stream));
+
+        $stream->write("id:123\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+
+        $stream = new ThroughStream();
+        $second->resolve(new Response(200, array('Content-Type' => 'text/event-stream'), $stream));
+
+        $stream->write("id:\ndata:hello\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+    }
+
+    public function testReconnectTwiceAfterSecondStreamWithoutRetryStillUsesRetryTimeFromFirstStream()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $timerReconnect = null;
+        $loop->expects($this->exactly(2))->method('addTimer')->with(
+            2.543,
+            $this->callback(function ($cb) use (&$timerReconnect) {
+                $timerReconnect = $cb;
+                return true;
+            })
+        );
+
+        $first = new Deferred();
+        $second = new Deferred();
+        $browser = $this->getMockBuilder('React\Http\Browser')->disableOriginalConstructor()->getMock();
+        $browser->expects($this->once())->method('withRejectErrorResponse')->willReturnSelf();
+        $browser->expects($this->exactly(3))->method('requestStreaming')->willReturnOnConsecutiveCalls(
+            $first->promise(),
+            $second->promise(),
+            new Promise(function () { })
+        );
+
+        $es = new EventSource('http://example.com', $browser, $loop);
+
+        $stream = new ThroughStream();
+        $first->resolve(new Response(200, array('Content-Type' => 'text/event-stream'), $stream));
+
+        $stream->write("retry:2543\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+
+        $stream = new ThroughStream();
+        $second->resolve(new Response(200, array('Content-Type' => 'text/event-stream'), $stream));
+
+        $stream->write("data:hello\n\n");
+        $stream->end();
+
+        $this->assertNotNull($timerReconnect);
+        $timerReconnect();
+    }
+
     public function testReconnectAfterStreamClosesUsesSpecifiedRetryTime()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
