@@ -704,7 +704,19 @@ class EventSourceTest extends TestCase
         $timerReconnect();
     }
 
-    public function testReconnectTwiceAfterSecondStreamWithEmptyIdClearsLastEventIdForNextRequest()
+    public function provideEmptyId()
+    {
+        return array(
+            array("id:\ndata:hello\n\n"),
+            array("id\ndata:hello\n\n"),
+            array("id\n\n")
+        );
+    }
+
+    /**
+     * @dataProvider provideEmptyId
+     */
+    public function testReconnectTwiceAfterSecondStreamWithEmptyIdClearsLastEventIdForNextRequest($event)
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $timerReconnect = null;
@@ -744,7 +756,7 @@ class EventSourceTest extends TestCase
         $stream = new ThroughStream();
         $second->resolve(new Response(200, array('Content-Type' => 'text/event-stream'), $stream));
 
-        $stream->write("id:\ndata:hello\n\n");
+        $stream->write($event);
         $stream->end();
 
         $this->assertNotNull($timerReconnect);
