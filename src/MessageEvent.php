@@ -25,7 +25,7 @@ class MessageEvent
         foreach ($lines as $line) {
             $colon = strpos($line, ':');
             $name = $colon === false ? $line : substr($line, 0, $colon);
-            $value = $colon === false ? '' : substr($line, $colon + 1);
+            $value = $colon === false ? '' : (string) substr($line, $colon + 1);
             if (isset($value[0]) && $value[0] === ' ') {
                 $value = (string) substr($value, 1);
             }
