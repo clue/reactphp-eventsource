@@ -42,6 +42,13 @@ class MessageEventTest extends TestCase
         $this->assertEquals("hello\n", $message->data);
     }
 
+    public function testParseDataWithoutColonAddsEmptyLine()
+    {
+        $message = MessageEvent::parse("data\ndata: hello\ndata", '');
+
+        $this->assertEquals("\nhello\n", $message->data);
+    }
+
     public function testParseDataWithCarriageReturnOverTwoLines()
     {
         $message = MessageEvent::parse("data: hello\rdata:", '');
@@ -77,6 +84,14 @@ class MessageEventTest extends TestCase
 
         $this->assertEquals("hello", $message->data);
         $this->assertEquals('1', $message->lastEventId);
+    }
+
+    public function testParseIdWithoutColonClearsLastEventId()
+    {
+        $message = MessageEvent::parse("data: hello\nid", '1');
+
+        $this->assertEquals('hello', $message->data);
+        $this->assertEquals('', $message->lastEventId);
     }
 
     public function testParseWithoutIdReturnsMessageWithEmptyIdIfLastEventIdIsEmpty()
@@ -154,6 +169,7 @@ class MessageEventTest extends TestCase
     public function retryTimeDataProvider()
     {
         return [
+            ['retry', null],
             ['retry: 1234', 1.234],
             ['retry: 0', 0.0],
             ['retry: ' . PHP_INT_MAX, PHP_INT_MAX * 0.001],

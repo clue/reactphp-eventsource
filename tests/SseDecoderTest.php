@@ -239,6 +239,17 @@ class SseDecoderTest extends TestCase
         $this->assertSame('42', $this->decoder->lastEventId);
     }
 
+    public function testEmitIdWithoutColonClearsLastEventIdWithoutDispatch()
+    {
+        $this->decoder->on('data', function () {
+            $this->fail('Did not expect data event');
+        });
+
+        $this->input->emit('data', array("id: 42\n\nid\n\n"));
+
+        $this->assertSame('', $this->decoder->lastEventId);
+    }
+
     public function testEmitEventWillAssignRetryTimeBeforeForwardingMessageEvent()
     {
         $retryTime = null;
